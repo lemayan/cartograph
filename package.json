@@ -2,13 +2,17 @@
   "name": "cartograph",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@12.10.1",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.9.10",
+    "@supabase/supabase-js": "2.117.2",
     "next": "16.3.8",
     "react": "19.2.8",
     "react-dom": "19.2.8"

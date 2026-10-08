@@ -1,0 +1,18 @@
+{
+  "organization_settings": {
+    "enabled": true,
+    "force_organization_selection": false,
+    "slug_disabled": false,
+    "organization_creation_defaults": {
+      "enabled": true,
+      "automatic_organization_creation": { "enabled": false }
+    }
+  },
+  "session": { "claims": { "role": "authenticated", "org_name": "{{org.name}}" } },
+  "paths": {
+    "home": "/",
+    "sign_in": "/sign-in",
+    "sign_up": "/sign-up",
+    "after_sign_out_all": "/sign-in"
+  }
+}
