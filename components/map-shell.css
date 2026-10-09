@@ -97,7 +97,10 @@
 .map-repository-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 11px; }
 .map-folder-count { margin-left: auto; flex-shrink: 0; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
 .map-categories { padding: 8px 0; }
-.map-categories li { display: flex; align-items: center; gap: 8px; padding: 5px 12px; font-size: 12px; }
+.map-categories button { display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 12px; text-align: left; font-size: 12px; border-left: 2px solid transparent; }
+.map-categories button[aria-pressed="true"] { border-left-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--map-rail)); }
+.map-categories button:focus-visible { outline-offset: -2px; }
+.map-category-clear { margin: 0 12px; color: var(--accent); font-size: 11px; }
 .map-categories code { font-size: 12px; }
 .map-category-total { margin-left: auto; padding-left: 6px; color: var(--muted); font-size: 10px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .map-category-swatch { width: 7px; height: 7px; flex-shrink: 0; border-radius: 1px; background: var(--muted); }

@@ -10,6 +10,9 @@ import type { MapSelection } from "@/lib/map/scene";
 import { foldFolders } from "@/lib/map/folding";
 import { compare } from "@/lib/parser/graph";
 import type { ParserResult } from "@/lib/parser/types";
+import { categoryFiles } from "@/lib/map/categories";
+import { repositoryInsights } from "@/lib/graph/analysis";
+import { frameworkEntryFiles } from "@/lib/adapters/entry-files";
 import "./map-shell.css";
 
 function hoverTarget(target: EventTarget | null, root: HTMLElement): MapSelection | null {
@@ -23,6 +26,9 @@ function hoverTarget(target: EventTarget | null, root: HTMLElement): MapSelectio
 
 export function MapShell({ result }: { result: ParserResult }) {
   const [selection, setSelection] = useState<MapSelection | null>(null);
+  const [category, setCategory] = useState<string | null>(null);
+  const matches = useMemo(() => categoryFiles(result.files, category), [result.files, category]);
+  const insights = useMemo(() => repositoryInsights(result.files, result.edges, frameworkEntryFiles(result.files)), [result]);
   const folded = useMemo(() => foldFolders(result.files, result.edges), [result]);
   const hoverStore = useMemo(() => createHoverStore(folded.folders), [folded]);
   const hoverController = useMemo(() => createHoverController(hoverStore.set, {
@@ -76,12 +82,17 @@ export function MapShell({ result }: { result: ParserResult }) {
           <ul className="map-categories">
             {sortedCategories.map(([extension, count]) => (
               <li key={extension}>
-                <span className="map-category-swatch" data-extension={extension} aria-hidden="true" />
-                <code>{extension}</code>
-                <span className="map-category-count">{count}</span>
+                <button type="button" aria-pressed={category === extension}
+                  aria-label={`${extension}, ${count} files${category === extension ? ", click to clear category" : ""}`}
+                  onClick={() => setCategory((previous) => previous === extension ? null : extension)}>
+                  <span className="map-category-swatch" data-extension={extension} aria-hidden="true" />
+                  <code>{extension}</code>
+                  <span className="map-category-count">{count}</span>
+                </button>
               </li>
             ))}
           </ul>
+          {category !== null && <button className="map-category-clear" type="button" onClick={() => setCategory(null)}>Clear category</button>}
         </div>
       </aside>
       <section className="map-shell-pane map-shell-canvas" aria-labelledby="map-canvas-heading">
@@ -91,10 +102,10 @@ export function MapShell({ result }: { result: ParserResult }) {
           <span className="map-folder-count">{folded.folders.length} folders</span>
         </header>
         <div className="map-shell-body map-canvas-body"><DependencyMap files={result.files} edges={result.edges}
-          selection={selection} onSelect={setSelection} /></div>
+          selection={selection} onSelect={setSelection} categoryMatches={matches} /></div>
       </section>
       <MapDetails result={result} folders={folded.folders} details={details} selection={selection}
-        onSelect={setSelection} />
+        onSelect={setSelection} insights={insights} categoryMatches={matches} />
     </div>
     </MapHoverProvider>
   );

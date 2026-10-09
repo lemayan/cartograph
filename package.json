@@ -11,7 +11,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "parser": "tsc -p tsconfig.parser.json && node .cartograph/parser/scripts/parser.js",
     "parser:verify": "tsc -p tsconfig.parser.json && node .cartograph/parser/scripts/parser-verify.js",
-    "map:verify": "tsc -p tsconfig.map.json && node .cartograph/map/scripts/map-verify.js"
+    "map:verify": "tsc -p tsconfig.map.json && node .cartograph/map/scripts/map-verify.js",
+    "graph:verify": "tsc -p tsconfig.map.json && node .cartograph/map/scripts/graph-verify.js"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.10",

@@ -29,6 +29,7 @@
 .map-module-hovered[data-dimmed="true"] { border-color: var(--accent); }
 .map-module[data-hover-kind="folder"] .map-module-toggle,
 .map-module-hovered:not(.map-module-open) .map-module-toggle { opacity: 1; }
+.map-module[data-category-active="true"][data-dimmed="true"] .map-module-toggle { opacity: 0.2; }
 .map-file-row[data-hovered="true"] > .map-file-select { background: color-mix(in srgb, var(--accent) 12%, var(--surface)); box-shadow: inset 2px 0 var(--accent); }
 
 .map-module-toggle {
@@ -64,6 +65,9 @@
 }
 
 .map-node-metrics > span { white-space: nowrap; }
+.map-panel-matches { color: var(--accent); }
+.map-module[data-category-active="true"]:not(.map-module-open) .map-module-toggle { gap: 2px; padding: 6px 10px; }
+.map-module[data-category-active="true"] .map-node-metrics { gap: 0 6px; font-size: 9px; }
 .map-incoming { color: var(--map-incoming); }
 .map-outgoing { color: var(--map-outgoing); }
 
