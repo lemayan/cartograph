@@ -3,6 +3,7 @@ import "server-only";
 import { auth } from "@clerk/nextjs/server";
 import { createClient } from "@supabase/supabase-js";
 import { validateEnvironment } from "@/lib/env";
+import type { Database } from "@/lib/supabase/database.types";
 
 export async function createServerDatabaseClient() {
   const { userId, orgId, sessionClaims, getToken } = await auth();
@@ -16,7 +17,7 @@ export async function createServerDatabaseClient() {
 
   // A fresh client per request prevents one team's token leaking into another's request.
   // The default Clerk token contains the organization; no JWT template or Supabase session.
-  return createClient(supabaseUrl, supabasePublishableKey, {
+  return createClient<Database>(supabaseUrl, supabasePublishableKey, {
     accessToken: async () => {
       const token = await getToken();
       if (!token) throw new Error("The Clerk session token is unavailable. Sign in again.");

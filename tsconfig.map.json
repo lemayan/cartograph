@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.parser.json",
+  "compilerOptions": {
+    "outDir": ".cartograph/map"
+  },
+  "include": ["lib/parser/**/*.ts", "lib/map/**/*.ts", "scripts/map-verify.ts"]
+}
