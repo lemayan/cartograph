@@ -29,6 +29,7 @@ export type Database = {
           parser_schema_version: number | null
           project_id: string
           repository_name: string | null
+          routes_extracted: boolean
           run_id: string
           stage: string | null
           stage_message: string | null
@@ -51,6 +52,7 @@ export type Database = {
           parser_schema_version?: number | null
           project_id: string
           repository_name?: string | null
+          routes_extracted?: boolean
           run_id?: string
           stage?: string | null
           stage_message?: string | null
@@ -73,6 +75,7 @@ export type Database = {
           parser_schema_version?: number | null
           project_id?: string
           repository_name?: string | null
+          routes_extracted?: boolean
           run_id?: string
           stage?: string | null
           stage_message?: string | null
@@ -397,24 +400,30 @@ export type Database = {
           analysis_id: string
           file_id: string
           id: string
+          line: number | null
           method: string
           organization_id: string
+          parser_order: number | null
           path: string
         }
         Insert: {
           analysis_id: string
           file_id: string
           id?: string
+          line?: number | null
           method: string
           organization_id: string
+          parser_order?: number | null
           path: string
         }
         Update: {
           analysis_id?: string
           file_id?: string
           id?: string
+          line?: number | null
           method?: string
           organization_id?: string
+          parser_order?: number | null
           path?: string
         }
         Relationships: [

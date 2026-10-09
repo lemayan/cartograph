@@ -4,6 +4,7 @@ import { publicRepository } from "./repository";
 import { analysisWriter, type AnalysisStatus, type PipelineStage } from "./writer";
 import { selectRepository, parseSelectedRepository } from "../parser/parse";
 import { validateParserResult } from "../parser/contract";
+import { detectAdapter } from "../adapters/detect";
 
 export interface PipelineOutcome {
   analysisId: string;
@@ -36,7 +37,7 @@ export async function executeRepositoryAnalysis(repositoryUrl: string, organizat
     const selected = await selectRepository(archive.directory);
     stage = "parsing";
     await writer.advance(reserved.analysisId, reserved.runId, stage, `Parsing ${selected.candidates.length} files, ${selected.skipped.length} skipped.`);
-    const result = validateParserResult(await parseSelectedRepository(selected));
+    const result = validateParserResult(await parseSelectedRepository(selected, await detectAdapter(selected)));
     // No source is needed after parsing. Clean up before committing a complete result.
     await archive.cleanup();
     archive = null;

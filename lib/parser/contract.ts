@@ -120,6 +120,21 @@ export function validateParserResult(value: unknown): ParserResult {
   if (result.coverage.filesParsed !== files.length || result.coverage.filesSkipped !== skipped.length
     || result.coverage.filesFound !== files.length + skipped.length) throw new Error("File coverage does not add up");
   const paths = new Set(files.map((file) => file.path));
+  if (data.routes !== undefined) {
+    result.routes = array(data.routes).map((value) => {
+      const row = object(value);
+      const file = relative(row.file);
+      const method = string(row.method);
+      const pattern = string(row.path);
+      const line = integer(row.line);
+      if (!paths.has(file) || !/^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|ALL)$/.test(method)
+        || !pattern.startsWith("/") || /[\x00-\x1f\x7f?#]/.test(pattern) || !line
+        || line > (files.find((item) => item.path === file)?.lines ?? 0)) throw new Error("Invalid recovered route");
+      return { file, method, path: pattern, line };
+    });
+    const keys = result.routes.map((route) => JSON.stringify(route));
+    if (new Set(keys).size !== keys.length) throw new Error("Duplicate recovered route");
+  }
   if (paths.size !== files.length || new Set(skipped.map((file) => file.path)).size !== skipped.length
     || skipped.some((file) => paths.has(file.path))) throw new Error("Duplicate file or overlap in skipped/parsed inventory");
   if (result.coverage.folders !== new Set(files.map((file) => file.folder)).size) throw new Error("Folder count is wrong");

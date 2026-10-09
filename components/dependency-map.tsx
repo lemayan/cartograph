@@ -89,7 +89,7 @@ function FolderNodeView({ id, data }: NodeProps<FolderNode>) {
               <button type="button" className="map-file-select nodrag nopan" title={file.path}
                 aria-pressed={selection?.type === "file" && selection.path === file.path}
                 onClick={(event) => { event.stopPropagation(); onSelect({ type: "file", path: file.path }); }}>
-                <span className="map-file-name"><span className="map-category-swatch" data-extension={file.extension} aria-hidden="true" /><code>{label}</code></span>
+                <span className="map-file-name"><span className="map-category-swatch" data-role={file.kind ?? "generic"} aria-hidden="true" /><code>{label}</code></span>
                 <span className="map-file-counts">
                   <span className="map-incoming" title="Fan-in" aria-label={`Fan-in ${file.fanIn}`}>←{file.fanIn}</span>
                   <span className="map-outgoing" title="Fan-out" aria-label={`Fan-out ${file.fanOut}`}>{file.fanOut}→</span>

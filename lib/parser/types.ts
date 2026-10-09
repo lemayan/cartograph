@@ -1,3 +1,5 @@
+import type { ts } from "ts-morph";
+
 /** Paths in this contract are repository-relative, use '/', and never contain '..'. */
 export type ImportKind = "import" | "re-export" | "dynamic-import";
 export type ImportStatus = "resolved" | "external" | "excluded" | "unresolved";
@@ -67,6 +69,15 @@ export interface ParserResult {
   files: ParsedFile[];
   edges: ParsedEdge[];
   coverage: ParserCoverage;
+  /** Absent in saved pre-adapter results; an empty list means extraction ran. */
+  routes?: ParsedRoute[];
+}
+
+export interface ParsedRoute {
+  file: string;
+  method: string;
+  path: string;
+  line: number;
 }
 
 export interface AdapterFile {
@@ -74,10 +85,13 @@ export interface AdapterFile {
   folder: string;
   module: "module" | "script";
   contents: string;
+  syntax: ts.SourceFile;
 }
 
 /** Syntax extraction and resolution do not depend on adapter classifications. */
 export interface FrameworkAdapter {
   name: string;
   classify(file: Readonly<AdapterFile>): string | null;
+  prepare?(files: readonly Readonly<AdapterFile>[]): void;
+  routes?(file: Readonly<AdapterFile>): ParsedRoute[];
 }

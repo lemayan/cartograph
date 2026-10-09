@@ -75,7 +75,7 @@ corepack pnpm build
 ```
 
 The browser acceptance check belongs to the user and is in
-the phase specs, including [`docs/specs/phase-07.md`](docs/specs/phase-07.md).
+the phase specs, including [`docs/specs/phase-08.md`](docs/specs/phase-08.md).
 
 ## Standalone parser (Phase 03)
 
@@ -89,8 +89,10 @@ pnpm parser:verify
 
 The directory argument can point anywhere on disk. JSON output is the versioned
 `ParserResult` contract in `lib/parser/types.ts`, validated by
-`readParserResult()` before it is used. The CLI prints coverage, unique edges,
-skip reasons, and unresolved examples; the JSON keeps the full occurrence ledger.
+`readParserResult()` before it is used. The CLI detects Next.js, NestJS, then
+React from declared package dependencies. It prints coverage, unique edges,
+recovered routes, skip reasons, and unresolved examples; the JSON keeps the full
+occurrence ledger. Detection and framework knowledge live outside the parser core.
 
 The parser retains every supported file in complete directories, excluding
 dependency, hidden, and generated directories with explicit reasons. It does
@@ -109,13 +111,18 @@ to fold it again. Node height reflects fan-in. The right detail column shows the
 repository summary or selected file/folder structure, with clickable paths and
 hover highlights shared with the map. Explanation is an empty state for now.
 
-The rail groups parsed files by extension, with a coloured swatch and a count
-for each. File roles remain unclassified; they are separate from these categories.
+The rail groups parsed files by framework role in fixed reading order: Next.js
+shows Page routes, API endpoints, and Server actions; NestJS shows Controllers,
+Services, and Modules. Unmatched repositories use Generic files. The Routes
+button opens the stored method/pattern/source table. Source links point to the
+analysed commit. Existing analyses need a deliberate rerun to extract roles and
+routes; unknown runtime route configuration produces no guessed patterns.
 
 ```sh
 corepack pnpm parser <repository-directory> --out .cartograph/map.json
 corepack pnpm map:verify .cartograph/map.json
 corepack pnpm graph:verify .cartograph/map.json
+corepack pnpm adapters:verify
 corepack pnpm pipeline:verify
 corepack pnpm pipeline:verify:live
 ```
@@ -128,3 +135,6 @@ tests the actual writer and RLS, then removes its own fixtures.
 See [Phase 07 implementation](docs/phase-07-implementation.md) for applied
 migrations, progress and rerun behavior, verification, browser checks, and
 limitations. Earlier map/detail/graph implementation reports remain in `docs/`.
+
+See [Phase 08 implementation](docs/phase-08-implementation.md) for framework
+scope, route storage, terminal evidence, and browser acceptance.

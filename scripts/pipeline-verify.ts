@@ -11,6 +11,7 @@ import { publicRepository } from "../lib/pipeline/repository";
 import { runRepositoryAnalysis } from "../lib/pipeline/run";
 import { parseRepository, selectRepository, parseSelectedRepository } from "../lib/parser/parse";
 import { validateParserResult } from "../lib/parser/contract";
+import { parseFrameworkRepository } from "../lib/adapters/parse-repository";
 
 const run = promisify(execFile);
 const fixtureSha = "a".repeat(40);
@@ -87,7 +88,7 @@ async function liveVerification(archive: Uint8Array, invalidArchive: Uint8Array,
     assert.ok(capturedArchive && capturedSha);
     const stored = validateParserResult(await readAsOrganization(outcome.analysisId, organization));
     const replay = await fetchPublicRepository(publicRepository(repositoryUrl), archivedFetch(capturedArchive, capturedSha));
-    try { assert.deepEqual(stored, validateParserResult(await parseRepository(replay.directory))); }
+    try { assert.deepEqual(stored, validateParserResult(await parseFrameworkRepository(replay.directory))); }
     finally { await replay.cleanup(); }
     const metadata = await databaseQuery(`select jsonb_build_object('commit', commit_sha, 'status', status, 'stage', stage,
       'finished', finished_at is not null, 'failure', failure_message) from public.analyses where id = ${sqlLiteral(outcome.analysisId)}::uuid;`);
@@ -96,7 +97,7 @@ async function liveVerification(archive: Uint8Array, invalidArchive: Uint8Array,
     assert.equal(repeated.created, false);
     assert.equal(repeated.analysisId, outcome.analysisId);
     assert.equal(await readAsOrganization(outcome.analysisId, `${organization}_other`), null);
-    console.log(`PASS: live archive -> select -> parse -> atomic storage -> RLS readback: ${stored.repository}, commit ${capturedSha}, ${stored.files.length} files, ${stored.edges.length} edges, ${stored.coverage.filesSkipped} skips; full result unchanged.`);
+    console.log(`PASS: live archive -> select -> parse -> atomic storage -> RLS readback: ${stored.repository}, adapter ${stored.adapter}, commit ${capturedSha}, ${stored.files.length} files, ${stored.edges.length} edges, ${stored.routes?.length ?? 0} routes, ${stored.coverage.filesSkipped} skips; full result unchanged.`);
 
     const concurrent = await Promise.all([1, 2, 3].map(() => runRepositoryAnalysis("https://github.com/cartograph/concurrency-fixture", organization, archivedFetch(archive))));
     assert.equal(new Set(concurrent.map((item) => item.analysisId)).size, 1);

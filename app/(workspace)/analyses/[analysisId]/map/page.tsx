@@ -30,6 +30,7 @@ export default async function AnalysisMapPage({ params }: { params: Promise<{ an
         <AnalysisUpdates key={organization.id} analysisId={analysisId} organizationId={organization.id} /><AnalysisRerun analysisId={analysisId} />
       </div>
     </header>
-    <CoverageBanner coverage={result.coverage} /><div className="analysis-map"><MapShell key={analysis.updatedAt} result={result} /></div>
+    <CoverageBanner coverage={result.coverage} /><div className="analysis-map"><MapShell key={analysis.updatedAt} result={result}
+      sourceBase={analysis.commitSha ? `${analysis.repositoryUrl}/blob/${analysis.commitSha}/` : undefined} /></div>
   </section>;
 }

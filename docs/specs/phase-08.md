@@ -31,6 +31,14 @@
   then the layers behind them, then plumbing. The same repository always
   presents its categories in the same places.
 
+## Confirmed scope
+
+Detection order is Next.js, NestJS, then React, from declared package
+dependencies and their package roots. Next.js covers static App Router and
+Pages Router conventions; NestJS combines literal controller/method decorators
+with a recoverable bootstrap prefix. Runtime configuration that prevents exact
+recovery leaves routes absent. This scope was confirmed before implementation.
+
 ## Acceptance check
 
 1. Analyse a Next.js repository: the rail says Page routes, API endpoints,

@@ -7,7 +7,7 @@ import { compare, deduplicateEdges, withFanCounts } from "./graph";
 import { inventory, relativePath } from "./inventory";
 import { ImportResolver } from "./resolution";
 import { countImports } from "./coverage";
-import type { FrameworkAdapter, ImportKind, ImportRecord, ParsedEdge, ParsedFile, ParserResult } from "./types";
+import type { AdapterFile, FrameworkAdapter, ImportKind, ImportRecord, ParsedEdge, ParsedFile, ParserResult } from "./types";
 
 export async function selectRepository(directory: string) {
   const root = await realpath(path.resolve(directory));
@@ -74,9 +74,17 @@ export async function parseSelectedRepository(selection: Awaited<ReturnType<type
       continue;
     }
     file.module = ts.isExternalModule(source) ? "module" : "script";
-    file.kind = adapter.classify({ path: file.path, folder: file.folder, module: file.module, contents: source.text });
     parsed.push(file);
   }
+  const adapterFiles: AdapterFile[] = parsed.map((file) => {
+    const syntax = project.getSourceFileOrThrow(path.join(root, file.path)).compilerNode;
+    return { path: file.path, folder: file.folder, module: file.module, contents: syntax.text, syntax };
+  });
+  adapter.prepare?.(adapterFiles);
+  const routes = adapterFiles.flatMap((file, index) => {
+    parsed[index].kind = adapter.classify(file);
+    return adapter.routes?.(file) ?? [];
+  });
   const resolver = new ImportResolver(root, parsed.map((file) => file.path), walked.skipped);
   const records: ImportRecord[] = [];
   const edges: ParsedEdge[] = [];
@@ -126,6 +134,7 @@ export async function parseSelectedRepository(selection: Awaited<ReturnType<type
     adapter: adapter.name,
     files: withFanCounts(parsed, deduplicated),
     edges: deduplicated,
+    routes,
     coverage: {
       filesFound: walked.found,
       filesParsed: parsed.length,
