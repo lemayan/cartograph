@@ -11,12 +11,14 @@ import { layoutScene } from "@/lib/map/layout";
 import { useFolderHover } from "./map-hover";
 import { createScene, expectedHandles, panelHeaderHeight, panelRowLimit, rowHandle, rowPortTop, scrollScene, selectionDirection, selectionHighlight, selectionVisibility, type MapSelection, type SceneNode } from "@/lib/map/scene";
 import type { ParsedEdge, ParsedFile } from "@/lib/parser/types";
+import { categoryVisibility } from "@/lib/map/categories";
 import "@xyflow/react/dist/style.css";
 import "./dependency-map.css";
 
 type FolderData = {
   scene: SceneNode;
   highlightedRows: ReadonlySet<string> | null;
+  categoryMatches: ReadonlySet<string> | null;
   dimmed: boolean;
   aboveBright: boolean;
   belowBright: boolean;
@@ -43,23 +45,25 @@ function FolderNodeView({ id, data }: NodeProps<FolderNode>) {
   const hovered = hover !== null;
   const hoveredFile = hover?.type === "file" ? hover.path : null;
   const hoveredIndex = hoveredFile === null ? -1 : scene.folder.files.findIndex((file) => file.path === hoveredFile);
-  const aboveBright = data.aboveBright || (hoveredIndex >= 0 && hoveredIndex < scene.rowStart);
-  const belowBright = data.belowBright || (hoveredIndex >= scene.rowEnd && hoveredIndex >= 0);
+  const aboveBright = data.aboveBright || (data.categoryMatches === null && hoveredIndex >= 0 && hoveredIndex < scene.rowStart);
+  const belowBright = data.belowBright || (data.categoryMatches === null && hoveredIndex >= scene.rowEnd && hoveredIndex >= 0);
   const updateNodeInternals = useUpdateNodeInternals();
   const handleKey = expectedHandles(scene, "in").join("|");
   useLayoutEffect(() => { updateNodeInternals(id); }, [id, handleKey, scene.scrollTop, updateNodeInternals]);
   const selected = selection?.type === "folder" ? selection.path === scene.folder.path
     : selection?.type === "file" && scene.folder.files.some((file) => file.path === selection.path);
+  const matchCount = data.categoryMatches === null ? null : scene.folder.files.filter((file) => data.categoryMatches?.has(file.path)).length;
   const metrics = (
     <span className="map-node-metrics">
-      <span>{scene.folder.files.length} files</span>
+      {matchCount === null ? <span>{scene.folder.files.length} files</span>
+        : <span className="map-panel-matches" title={`${matchCount} of ${scene.folder.files.length} files matched`}>{matchCount}/{scene.folder.files.length} matched</span>}
       <span className="map-incoming" title="Distinct files outside this group importing its files" aria-label={`Fan-in ${scene.folder.fanIn}`}>←{scene.folder.fanIn}</span>
       <span className="map-outgoing" title="Distinct files outside this group imported by its files" aria-label={`Fan-out ${scene.folder.fanOut}`}>{scene.folder.fanOut}→</span>
     </span>
   );
   return (
     <div className={`map-module${scene.expanded ? " map-module-open" : ""}${selected ? " map-module-selected" : ""}${hovered ? " map-module-hovered" : ""}`}
-      data-dimmed={dimmed} data-hover-kind={hover?.type}
+      data-dimmed={dimmed} data-hover-kind={hover?.type} data-category-active={data.categoryMatches !== null}
       data-map-folder={scene.folder.path}>
       <button
         className={`map-module-toggle nodrag nopan${scene.expanded ? " map-panel-header" : ""}`}
@@ -80,7 +84,8 @@ function FolderNodeView({ id, data }: NodeProps<FolderNode>) {
           {scene.allRows.map(({ file, label }) => (
             <div key={file.path} className="map-file-row" data-hovered={hoveredFile === file.path}
               data-map-file={file.path}
-              style={{ opacity: highlightedRows && !highlightedRows.has(file.path) && hoveredFile !== file.path ? 0.2 : 1 }}>
+              style={{ opacity: data.categoryMatches !== null ? data.categoryMatches.has(file.path) ? 1 : 0.2
+                : highlightedRows && !highlightedRows.has(file.path) && hoveredFile !== file.path ? 0.2 : 1 }}>
               <button type="button" className="map-file-select nodrag nopan" title={file.path}
                 aria-pressed={selection?.type === "file" && selection.path === file.path}
                 onClick={(event) => { event.stopPropagation(); onSelect({ type: "file", path: file.path }); }}>
@@ -96,7 +101,9 @@ function FolderNodeView({ id, data }: NodeProps<FolderNode>) {
         {/* Keep handle IDs mounted; scrolling changes their positions, never their identity. */}
         {scene.allRows.map(({ file }, index) => (
           <div key={file.path} className="map-row-ports" style={{ top: rowPortTop(scene, index),
-            opacity: index < scene.rowStart || index >= scene.rowEnd ? 0 : highlightedRows && !highlightedRows.has(file.path) && hoveredFile !== file.path ? 0.2 : 1 }}>
+            opacity: index < scene.rowStart || index >= scene.rowEnd ? 0
+              : data.categoryMatches !== null ? data.categoryMatches.has(file.path) ? 1 : 0.2
+                : highlightedRows && !highlightedRows.has(file.path) && hoveredFile !== file.path ? 0.2 : 1 }}>
             <Ports incoming={rowHandle("in", file.path)} outgoing={rowHandle("out", file.path)} />
           </div>
         ))}
@@ -160,9 +167,10 @@ interface MapProps {
   edges: ParsedEdge[];
   selection: MapSelection | null;
   onSelect: (selection: MapSelection | null) => void;
+  categoryMatches: ReadonlySet<string> | null;
 }
 
-function Canvas({ files, edges, selection, onSelect }: MapProps) {
+function Canvas({ files, edges, selection, onSelect, categoryMatches }: MapProps) {
   const folded = useMemo(() => foldFolders(files, edges), [files, edges]);
   const [view, setView] = useState<{ expanded: Set<string>; offsets: Map<string, number>; revision: number; maxZoom: number }>(
     () => ({ expanded: new Set(), offsets: new Map(), revision: 0, maxZoom: 1 }));
@@ -170,7 +178,8 @@ function Canvas({ files, edges, selection, onSelect }: MapProps) {
   const geometry = useMemo(() => layoutScene(createScene(folded.folders, edges, view.expanded)), [folded, edges, view.expanded]);
   const scene = useMemo(() => scrollScene(geometry, edges, view.offsets), [geometry, edges, view.offsets]);
   const highlight = useMemo(() => selectionHighlight(selection, folded.folders, edges), [selection, folded, edges]);
-  const visible = useMemo(() => selectionVisibility(scene, highlight), [scene, highlight]);
+  const visible = useMemo(() => categoryMatches !== null ? categoryVisibility(scene, categoryMatches)
+    : selectionVisibility(scene, highlight), [scene, highlight, categoryMatches]);
   const toggle = useCallback((id: string) => {
     const folder = folded.folders.find((candidate) => candidate.id === id);
     if (!folder) throw new Error(`Cannot open absent folder ${id}`);
@@ -198,14 +207,14 @@ function Canvas({ files, edges, selection, onSelect }: MapProps) {
     id: node.id, type: "folder", position: node.position, width: node.width, height: node.height,
     style: { width: node.width, height: node.height },
     data: {
-      scene: node, selection, highlightedRows: visible?.rows ?? null,
+      scene: node, selection, highlightedRows: visible?.rows ?? null, categoryMatches,
       dimmed: visible !== null && !visible.nodes.has(node.id),
       aboveBright: visible === null || visible.above.has(node.id),
       belowBright: visible === null || visible.below.has(node.id),
       onToggle: toggle, onSelect, onScroll: scroll,
     },
     ariaLabel: `${node.folder.path}, ${node.folder.files.length} files`,
-  })), [scene, visible, selection, toggle, onSelect, scroll]);
+  })), [scene, visible, selection, toggle, onSelect, scroll, categoryMatches]);
   const flowEdges: ImportEdge[] = useMemo(() => scene.edges.map((edge) => {
     const related = visible?.edges.has(edge.id) ?? false;
     const direction = selectionDirection(edge, highlight);

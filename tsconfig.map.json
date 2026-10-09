@@ -3,5 +3,5 @@
   "compilerOptions": {
     "outDir": ".cartograph/map"
   },
-  "include": ["lib/parser/**/*.ts", "lib/map/**/*.ts", "scripts/map-verify.ts"]
+  "include": ["lib/parser/**/*.ts", "lib/map/**/*.ts", "lib/graph/**/*.ts", "lib/adapters/**/*.ts", "scripts/map-verify.ts", "scripts/graph-verify.ts"]
 }
