@@ -34,14 +34,14 @@ begin
     insert into public.organizations (id) values (team);
     insert into public.projects (organization_id, repository_url)
       values (team, 'https://example.invalid/rls-fixture') returning id into project;
-    insert into public.analyses (organization_id, project_id, is_seed)
-      values (team, project, true) returning id into analysis;
-    insert into public.files (organization_id, analysis_id, path)
-      values (team, analysis, 'fixture-a.ts') returning id into first_file;
-    insert into public.files (organization_id, analysis_id, path)
-      values (team, analysis, 'fixture-b.ts') returning id into second_file;
-    insert into public.edges (organization_id, analysis_id, source_file_id, target_file_id)
-      values (team, analysis, first_file, second_file);
+    insert into public.analyses (organization_id, project_id)
+      values (team, project) returning id into analysis;
+    insert into public.files (organization_id, analysis_id, path, folder, extension, lines, hash, module, fan_in, fan_out, parser_order)
+      values (team, analysis, 'fixture-a.ts', '.', '.ts', 1, repeat('a', 64), 'module', 0, 1, 1) returning id into first_file;
+    insert into public.files (organization_id, analysis_id, path, folder, extension, lines, hash, module, fan_in, fan_out, parser_order)
+      values (team, analysis, 'fixture-b.ts', '.', '.ts', 1, repeat('b', 64), 'module', 1, 0, 2) returning id into second_file;
+    insert into public.edges (organization_id, analysis_id, source_file_id, target_file_id, kinds, parser_order)
+      values (team, analysis, first_file, second_file, array['import'], 1);
     insert into public.routes (organization_id, analysis_id, file_id, method, path)
       values (team, analysis, first_file, 'GET', '/fixture');
     insert into public.explanations (organization_id, analysis_id, file_id, content)
@@ -146,15 +146,19 @@ declare
   own_file uuid;
   other_file uuid;
   invalid_status text;
+  metadata_project uuid;
 begin
-  select id into strict other_project from public.projects where organization_id = 'org_cartograph_test_b';
+  -- A fresh parent avoids the project uniqueness constraint masking the tenant FK check.
+  insert into public.projects (organization_id, repository_url)
+    values ('org_cartograph_test_b', 'https://example.invalid/cross-team-reference') returning id into other_project;
   select id into strict own_project from public.projects where organization_id = 'org_cartograph_test_a';
   select id into strict own_analysis from public.analyses where organization_id = 'org_cartograph_test_a';
   begin
     insert into public.analyses (organization_id, project_id) values ('org_cartograph_test_a', other_project);
     raise exception 'Cross-team project reference allowed';
   exception when foreign_key_violation then null; end;
-  foreach invalid_status in array array['running', 'completed', 'unknown'] loop
+  delete from public.projects where id = other_project;
+  foreach invalid_status in array array['parsing', 'completed', 'unknown'] loop
     begin
       insert into public.analyses (organization_id, project_id, status)
         values ('org_cartograph_test_a', own_project, invalid_status);
@@ -177,15 +181,19 @@ begin
     raise exception 'Blank failure message accepted';
   exception when check_violation then null; end;
   -- Synthetic hashes belong only to this rolled-back constraint check.
+  insert into public.projects (organization_id, repository_url)
+    values ('org_cartograph_test_a', 'https://example.invalid/metadata-complete') returning id into metadata_project;
   insert into public.analyses (organization_id, project_id, status, commit_sha, started_at, finished_at)
-    values ('org_cartograph_test_a', own_project, 'complete', repeat('a', 40), '2026-10-08 09:00:00+00', '2026-10-08 09:01:00+00');
-  insert into public.analyses (organization_id, project_id, status, commit_sha)
-    values ('org_cartograph_test_a', own_project, 'parsing', repeat('b', 64));
+    values ('org_cartograph_test_a', metadata_project, 'complete', repeat('a', 40), '2026-10-08 09:00:00+00', '2026-10-08 09:01:00+00');
+  insert into public.projects (organization_id, repository_url)
+    values ('org_cartograph_test_a', 'https://example.invalid/metadata-running') returning id into metadata_project;
+  insert into public.analyses (organization_id, project_id, status, stage, commit_sha, started_at)
+    values ('org_cartograph_test_a', metadata_project, 'running', 'parsing', repeat('b', 64), '2026-10-08 09:00:00+00');
   select id into strict own_file from public.files where organization_id = 'org_cartograph_test_a' and path = 'fixture-a.ts';
   select id into strict other_file from public.files where organization_id = 'org_cartograph_test_b' and path = 'fixture-a.ts';
   begin
-    insert into public.edges (organization_id, analysis_id, source_file_id, target_file_id)
-      values ('org_cartograph_test_a', own_analysis, own_file, other_file);
+    insert into public.edges (organization_id, analysis_id, source_file_id, target_file_id, kinds, parser_order)
+      values ('org_cartograph_test_a', own_analysis, own_file, other_file, array['import'], 2);
     raise exception 'Cross-team edge endpoint allowed';
   exception when foreign_key_violation then null; end;
 end;

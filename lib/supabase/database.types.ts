@@ -1,4 +1,3 @@
-// Generated from the Cartograph Supabase schema. Regenerate after schema changes.
 export type Json =
   | string
   | number
@@ -17,40 +16,70 @@ export type Database = {
     Tables: {
       analyses: {
         Row: {
+          adapter: string | null
           commit_sha: string | null
+          coverage: Json | null
           created_at: string
           failure_message: string | null
+          failure_stage: string | null
           finished_at: string | null
           id: string
           is_seed: boolean
           organization_id: string
+          parser_schema_version: number | null
           project_id: string
+          repository_name: string | null
+          run_id: string
+          stage: string | null
+          stage_message: string | null
+          stage_messages: Json
           started_at: string | null
           status: string
+          updated_at: string
         }
         Insert: {
+          adapter?: string | null
           commit_sha?: string | null
+          coverage?: Json | null
           created_at?: string
           failure_message?: string | null
+          failure_stage?: string | null
           finished_at?: string | null
           id?: string
           is_seed?: boolean
           organization_id: string
+          parser_schema_version?: number | null
           project_id: string
+          repository_name?: string | null
+          run_id?: string
+          stage?: string | null
+          stage_message?: string | null
+          stage_messages?: Json
           started_at?: string | null
           status?: string
+          updated_at?: string
         }
         Update: {
+          adapter?: string | null
           commit_sha?: string | null
+          coverage?: Json | null
           created_at?: string
           failure_message?: string | null
+          failure_stage?: string | null
           finished_at?: string | null
           id?: string
           is_seed?: boolean
           organization_id?: string
+          parser_schema_version?: number | null
           project_id?: string
+          repository_name?: string | null
+          run_id?: string
+          stage?: string | null
+          stage_message?: string | null
+          stage_messages?: Json
           started_at?: string | null
           status?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -73,21 +102,27 @@ export type Database = {
         Row: {
           analysis_id: string
           id: string
+          kinds: string[]
           organization_id: string
+          parser_order: number
           source_file_id: string
           target_file_id: string
         }
         Insert: {
           analysis_id: string
           id?: string
+          kinds: string[]
           organization_id: string
+          parser_order: number
           source_file_id: string
           target_file_id: string
         }
         Update: {
           analysis_id?: string
           id?: string
+          kinds?: string[]
           organization_id?: string
+          parser_order?: number
           source_file_id?: string
           target_file_id?: string
         }
@@ -217,20 +252,47 @@ export type Database = {
       files: {
         Row: {
           analysis_id: string
+          extension: string
+          fan_in: number
+          fan_out: number
+          folder: string
+          hash: string
           id: string
+          kind: string | null
+          lines: number
+          module: string
           organization_id: string
+          parser_order: number
           path: string
         }
         Insert: {
           analysis_id: string
+          extension: string
+          fan_in: number
+          fan_out: number
+          folder: string
+          hash: string
           id?: string
+          kind?: string | null
+          lines: number
+          module: string
           organization_id: string
+          parser_order: number
           path: string
         }
         Update: {
           analysis_id?: string
+          extension?: string
+          fan_in?: number
+          fan_out?: number
+          folder?: string
+          hash?: string
           id?: string
+          kind?: string | null
+          lines?: number
+          module?: string
           organization_id?: string
+          parser_order?: number
           path?: string
         }
         Relationships: [
@@ -384,7 +446,59 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      advance_repository_analysis: {
+        Args: {
+          p_analysis_id: string
+          p_commit_sha?: string
+          p_message: string
+          p_organization_id: string
+          p_run_id: string
+          p_stage: string
+        }
+        Returns: undefined
+      }
+      begin_repository_analysis: {
+        Args: { p_organization_id: string; p_repository_url: string }
+        Returns: {
+          analysis_id: string
+          created: boolean
+          run_id: string
+          status: string
+        }[]
+      }
+      fail_repository_analysis: {
+        Args: {
+          p_analysis_id: string
+          p_message: string
+          p_organization_id: string
+          p_run_id: string
+          p_stage: string
+        }
+        Returns: boolean
+      }
+      read_repository_analysis: {
+        Args: { p_analysis_id: string }
+        Returns: Json
+      }
+      restart_repository_analysis: {
+        Args: { p_analysis_id: string; p_organization_id: string }
+        Returns: {
+          analysis_id: string
+          created: boolean
+          repository_url: string
+          run_id: string
+          status: string
+        }[]
+      }
+      store_repository_analysis: {
+        Args: {
+          p_analysis_id: string
+          p_organization_id: string
+          p_result: Json
+          p_run_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

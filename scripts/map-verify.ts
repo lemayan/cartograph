@@ -192,7 +192,8 @@ async function verify(): Promise<void> {
   assert.throws(() => repositoryDetails(detailFixture, [{ source: "absent.ts", target: "b/b.ts", kinds: ["import"] }]), /absent endpoint/);
   const args = process.argv.slice(2);
   if (args.length > 1) throw new Error("Usage: pnpm map:verify [parser-output.json]");
-  const filename = path.resolve(args[0] ?? "data/preview/excalidraw.json");
+  if (args.length !== 1) throw new Error("Usage: pnpm map:verify <parser-output.json>. Generate it with pnpm parser <repository-directory> --out <file.json>.");
+  const filename = path.resolve(args[0]);
   const data = await readParserResult(filename);
   console.log(`Repository: ${data.repository}; input: ${filename}`);
   const frozen = JSON.stringify(data);

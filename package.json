@@ -12,7 +12,9 @@
     "parser": "tsc -p tsconfig.parser.json && node .cartograph/parser/scripts/parser.js",
     "parser:verify": "tsc -p tsconfig.parser.json && node .cartograph/parser/scripts/parser-verify.js",
     "map:verify": "tsc -p tsconfig.map.json && node .cartograph/map/scripts/map-verify.js",
-    "graph:verify": "tsc -p tsconfig.map.json && node .cartograph/map/scripts/graph-verify.js"
+    "graph:verify": "tsc -p tsconfig.map.json && node .cartograph/map/scripts/graph-verify.js",
+    "pipeline:verify": "tsc -p tsconfig.pipeline.json && node --conditions=react-server .cartograph/pipeline/scripts/pipeline-verify.js",
+    "pipeline:verify:live": "tsc -p tsconfig.pipeline.json && node --env-file=.env.local --conditions=react-server .cartograph/pipeline/scripts/pipeline-verify.js --live"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.10",

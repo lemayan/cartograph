@@ -9,10 +9,22 @@ import { ImportResolver } from "./resolution";
 import { countImports } from "./coverage";
 import type { FrameworkAdapter, ImportKind, ImportRecord, ParsedEdge, ParsedFile, ParserResult } from "./types";
 
-export async function parseRepository(directory: string, adapter: FrameworkAdapter = fallbackAdapter): Promise<ParserResult> {
+export async function selectRepository(directory: string) {
   const root = await realpath(path.resolve(directory));
   if (!(await stat(root)).isDirectory()) throw new Error(`Not a directory: ${root}`);
   const walked = await inventory(root);
+  return { root, ...walked };
+}
+
+export async function parseRepository(directory: string, adapter: FrameworkAdapter = fallbackAdapter): Promise<ParserResult> {
+  return parseSelectedRepository(await selectRepository(directory), adapter);
+}
+
+export async function parseSelectedRepository(selection: Awaited<ReturnType<typeof selectRepository>>,
+  adapter: FrameworkAdapter = fallbackAdapter): Promise<ParserResult> {
+  const { root, ...walked } = selection;
+  // Parsing can add syntax/read exclusions without changing the selection supplied by the caller.
+  walked.skipped = [...walked.skipped];
   const project = new Project({
     skipAddingFilesFromTsConfig: true,
     skipFileDependencyResolution: true,

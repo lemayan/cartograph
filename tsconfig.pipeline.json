@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.parser.json",
+  "compilerOptions": {
+    "outDir": ".cartograph/pipeline",
+    "lib": ["ES2022", "DOM"]
+  },
+  "include": ["lib/parser/**/*.ts", "lib/pipeline/**/*.ts", "lib/supabase/database.types.ts", "scripts/pipeline*.ts"]
+}
