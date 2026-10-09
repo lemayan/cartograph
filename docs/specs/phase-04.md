@@ -31,8 +31,12 @@
 - **An opened folder becomes a panel, not loose nodes.** It stays one object on
   the canvas — a bordered box with a header carrying the folder's name, how many
   files are in it, and its fan-in and fan-out — and the files appear as rows
-  inside that box. When there are more rows than fit, the panel says how many
-  more rather than growing without limit. Edges connect to the rows.
+  inside that box. At the user's request, large panels have a fixed-height,
+  scrollable file list, with the header remaining visible and every file
+  reachable. A range indicator reports how many files are above and below the
+  viewport. Edges connect to visible rows; off-screen files use clearly counted
+  above/below anchors at the viewport boundary. Scrolling preserves panel size,
+  map layout, pan, zoom, and selection.
 - A node's **height** carries how many things depend on it. Width comes from the
   label, so a long name doesn't read as an important file.
 - Opening a folder refits the view so the new panel is visible.

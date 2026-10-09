@@ -11,6 +11,7 @@ export function TeamSwitcher({ organizationId, canInvite }: { organizationId: st
       afterSelectOrganizationUrl="/"
       afterCreateOrganizationUrl="/"
       afterLeaveOrganizationUrl="/start"
+      appearance={{ elements: { rootBox: "workspace-team", organizationSwitcherTrigger: "workspace-team-trigger" } }}
       organizationProfileProps={{ appearance: { elements: { membersPageInviteButton: { display: "none" } } } }}
     >
       {canInvite && (

@@ -8,14 +8,20 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "parser": "tsc -p tsconfig.parser.json && node .cartograph/parser/scripts/parser.js",
+    "parser:verify": "tsc -p tsconfig.parser.json && node .cartograph/parser/scripts/parser-verify.js",
+    "map:verify": "tsc -p tsconfig.map.json && node .cartograph/map/scripts/map-verify.js"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.10",
+    "@dagrejs/dagre": "^3.1.1",
     "@supabase/supabase-js": "2.117.2",
+    "@xyflow/react": "^12.12.0",
     "next": "16.3.8",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "ts-morph": "^28.0.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

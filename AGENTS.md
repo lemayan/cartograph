@@ -98,6 +98,11 @@ The UI is a dense developer tool. Small type, tight spacing, monospace for file
 paths. Colour means something or isn't there. Nothing moves unless it was
 clicked.
 
+Keep implementations tight in every phase. Use supplied references to resolve
+the details of the current phase, including information density and behavior.
+Raise gaps in the spec before building; do not settle for a sparse approximation
+or add functionality belonging to a later phase.
+
 There's a frontend design skill that activates on its own for UI work. Use it,
 but the paragraph above overrules it — it will reach for motion, depth and big
 type, and this is a tool someone stares at for an hour.

@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "types": ["node"],
+    "rootDir": ".",
+    "outDir": ".cartograph/parser",
+    "noEmitOnError": true
+  },
+  "include": ["lib/parser/**/*.ts", "scripts/parser*.ts"],
+  "exclude": ["node_modules", ".cartograph"]
+}

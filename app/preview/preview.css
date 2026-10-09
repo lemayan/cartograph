@@ -1,0 +1,20 @@
+.map-preview {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.map-preview > .site-header {
+  flex-shrink: 0;
+}
+
+.map-preview-viewport {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.map-preview-viewport:focus-visible {
+  outline-offset: -2px;
+}

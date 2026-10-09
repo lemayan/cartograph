@@ -1,0 +1,102 @@
+/* The workspace is a ledger: paths lead, metadata recedes, and controls form one toolbar. */
+.workspace-shell {
+  --workspace-inset: #f0f1f3;
+  --workspace-hover: #f8f9fb;
+  --workspace-rule: #c9ced6;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+:root[data-theme="dark"] .workspace-shell {
+  --workspace-inset: #22262d;
+  --workspace-hover: #1d2128;
+  --workspace-rule: #454c56;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] .workspace-shell {
+    --workspace-inset: #22262d;
+    --workspace-hover: #1d2128;
+    --workspace-rule: #454c56;
+  }
+}
+
+.workspace-shell .workspace-toolbar {
+  flex-wrap: wrap;
+  min-height: 54px;
+  padding: 9px 24px;
+  gap: 12px 20px;
+}
+
+.workspace-toolbar-main, .workspace-toolbar-account {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.workspace-toolbar-main { flex: 1; }
+.workspace-toolbar-account { padding-left: 16px; border-left: 1px solid var(--border); }
+.workspace-toolbar .brand { display: inline-flex; align-items: center; gap: 9px; flex-shrink: 0; font-size: 13px; letter-spacing: -0.02em; }
+.workspace-toolbar .brand:hover { color: var(--accent); }
+.brand-mark { flex-shrink: 0; }
+.workspace-toolbar-divider { height: 20px; width: 1px; background: var(--border); flex-shrink: 0; }
+.workspace-toolbar .workspace-team { flex: 0 1 300px; min-width: 0; }
+.workspace-toolbar .workspace-team-trigger { width: 100%; min-height: 32px; max-width: 300px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); box-shadow: none; }
+.workspace-toolbar .workspace-team-trigger:hover { background: var(--workspace-inset); }
+.workspace-toolbar .theme-control { gap: 7px; font-size: 11px; }
+.workspace-toolbar .theme-control select { min-height: 32px; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+.workspace-toolbar .workspace-user-trigger { padding: 2px; border: 1px solid var(--border); border-radius: 50%; box-shadow: none; }
+.workspace-toolbar .workspace-user-avatar { width: 28px; height: 28px; }
+
+.workspace-content { flex: 1; min-width: 0; padding: 28px 24px; }
+.dashboard { display: grid; gap: 16px; max-width: 1320px; margin-inline: auto; }
+.dashboard .workspace-heading { gap: 7px; }
+.dashboard-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.dashboard-heading h1 { font-size: 16px; line-height: 1.4; font-weight: 600; letter-spacing: -0.025em; overflow-wrap: anywhere; }
+.analysis-count { padding: 2px 7px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); font-size: 11px; line-height: 1.5; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.workspace-identity { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; color: var(--muted); font-size: 11px; }
+.workspace-identity code { color: var(--muted); overflow-wrap: anywhere; user-select: all; font-size: 11px; }
+
+.analyses-panel { min-width: 0; border: 1px solid var(--workspace-rule); border-radius: 5px; overflow: hidden; background: var(--surface); }
+.analyses-scroll { overflow-x: auto; }
+.analyses-scroll:focus-visible { outline-offset: -3px; }
+.analyses-table { width: 100%; min-width: 680px; border-collapse: collapse; text-align: left; }
+.analyses-table th, .analyses-table td { padding: 8px 12px; vertical-align: top; }
+.analyses-table thead { background: var(--workspace-inset); }
+.analyses-table th { height: 35px; border-bottom: 1px solid var(--workspace-rule); color: var(--muted); font-size: 11px; font-weight: 500; line-height: 1.5; }
+.analyses-table td { border-bottom: 1px solid var(--border); font-size: 12px; line-height: 1.65; }
+.analyses-table tbody tr:last-child td { border-bottom: 0; }
+.analyses-table tbody tr:hover { background: var(--workspace-hover); }
+.analyses-table th:first-child { width: 34%; }
+.analyses-table th:nth-child(2) { width: 36%; }
+.analyses-table th:nth-child(n+3) { width: 10%; }
+.analysis-repository { overflow-wrap: anywhere; }
+.analysis-repository code { font-size: 12px; font-weight: 500; }
+.analysis-status { font-weight: 500; }
+.analysis-pending { color: var(--muted); font-weight: 400; }
+.analysis-failure { margin-top: 2px; max-width: 54ch; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+.analysis-metadata { color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.analysis-metadata code { font-size: 11px; }
+.analysis-missing { color: var(--muted); }
+.analysis-seed { display: inline-block; margin-left: 8px; padding: 0 4px; border: 1px solid var(--border); border-radius: 3px; color: var(--muted); font-size: 10px; font-weight: 400; line-height: 1.5; vertical-align: 1px; }
+.analyses-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; padding: 8px 12px; border-top: 1px solid var(--border); background: var(--workspace-hover); }
+.analyses-footer p { max-width: 80ch; font-size: 11px; line-height: 1.5; }
+
+.analyses-empty, .workspace-feedback { padding: 24px; border: 1px solid var(--workspace-rule); border-radius: 5px; background: var(--surface); }
+.analyses-empty h2, .workspace-feedback h1 { font-size: 14px; font-weight: 500; }
+.analyses-empty p, .workspace-feedback p { margin-top: 6px; max-width: 65ch; font-size: 12px; }
+.workspace-feedback { max-width: 640px; margin-inline: auto; }
+.workspace-feedback button { min-height: 32px; margin-top: 16px; padding: 5px 10px; border: 1px solid transparent; border-radius: 4px; background: var(--accent); color: var(--accent-foreground); font-weight: 500; }
+
+@media (max-width: 640px) {
+  .workspace-shell .workspace-toolbar { padding: 10px 14px; gap: 10px; }
+  .workspace-toolbar-main { flex-basis: 100%; gap: 10px; }
+  .workspace-toolbar-account { margin-left: auto; padding-left: 0; border-left: 0; gap: 12px; }
+  .workspace-toolbar .workspace-team-trigger { max-width: 220px; }
+  .workspace-content { padding: 20px 14px; }
+  .dashboard { gap: 14px; }
+  .dashboard-heading h1 { font-size: 15px; }
+  .analyses-empty, .workspace-feedback { padding: 20px 16px; }
+}

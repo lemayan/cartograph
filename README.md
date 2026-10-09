@@ -72,3 +72,51 @@ corepack pnpm build
 
 The browser acceptance check belongs to the user and is in
 [`docs/specs/phase-01.md`](docs/specs/phase-01.md).
+
+## Standalone parser (Phase 03)
+
+No app server, account, database, environment values, or network is needed:
+
+```sh
+pnpm parser . --out .cartograph/project.json
+pnpm parser --read .cartograph/project.json
+pnpm parser:verify
+```
+
+The directory argument can point anywhere on disk. JSON output is the versioned
+`ParserResult` contract in `lib/parser/types.ts`, validated by
+`readParserResult()` before it is used. The CLI prints coverage, unique edges,
+skip reasons, and unresolved examples; the JSON keeps the full occurrence ledger.
+
+The parser retains every supported file in complete directories, excluding
+dependency, hidden, and generated directories with explicit reasons. It does
+not follow symlinks. `folder` is the exact parent directory, with `.` for files
+at the repository root. See [Phase 03 implementation](docs/phase-03-implementation.md)
+for the contract, selection rules, acceptance numbers, and limitations.
+
+## Dependency map preview (Phase 04)
+
+Open `/preview` without signing in. The map uses the repository's Excalidraw parser
+snapshot: 706 files folded into 20 folder nodes. Click a folder to open its file
+panel, scroll its list to reach every file, click a row to highlight its real neighbours, or click the panel header
+to fold it again. Node height reflects fan-in. The right detail column shows the
+repository summary or selected file/folder structure, with clickable paths and
+hover highlights shared with the map. Explanation is an empty state for now.
+
+The rail groups parsed files by extension, with a coloured swatch and a count
+for each. File roles remain unclassified; they are separate from these categories.
+
+```sh
+pnpm map:verify
+pnpm map:verify data/preview/graphql.json
+```
+
+See [Phase 04 implementation](docs/phase-04-implementation.md) for terminal
+acceptance numbers, snapshot provenance and coverage, selection, scrolling,
+palette, the browser checks to run, and remaining limitations. The canvas's
+browser acceptance remains pending.
+
+See [Phase 05 implementation](docs/phase-05-implementation.md) for the detail
+pane, persistent tabs, exact neighbour lists, missing-data decisions, and
+browser acceptance. The current snapshot has no detected framework, route data,
+or classified file kinds; the pane reports those gaps explicitly.

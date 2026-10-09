@@ -10,6 +10,13 @@
   what the rest of the repository leans on most, ordered by how many things
   import it, and the files nothing imports at all, which is where reading
   starts. And a count of how many files no convention could identify.
+  At the user's request, the repository summary follows the supplied reference:
+  a compact repository/framework heading, three count cells for files, imports
+  and routes, skipped/unresolved supporting counts, and ten single-line paths
+  per ranked list with exact remaining counts. The files nothing imports are
+  ordered by outgoing dependency count, with paths breaking ties. Full paths
+  remain available on hover and to assistive technology; selected-file import
+  and dependent lists remain complete.
 - The right-hand pane fills from whatever is selected: the file's path, what
   kind of file it is, how long it is, how many things it depends on and how many
   depend on it, then the full list of each.
@@ -22,6 +29,12 @@
   map's selection to that file.
 - Hovering a neighbour in the pane highlights it on the map. Hovering a node on
   the map highlights it in the pane. Both directions.
+  Moving between file rows or between a file's label and counters must keep a
+  stable target, without briefly highlighting the whole folder or clearing.
+  Pointer and keyboard focus share the same highlight treatment. Hover never
+  changes selection or geometry, and reduced-motion preferences are respected.
+  Hover must not re-brighten unrelated rows or rebuild the canvas node/edge
+  objects. It marks only the target row or folder, with no fading trail.
 
 ## Constraints
 

@@ -1,0 +1,49 @@
+.map-detail-tabs { display: flex; flex-shrink: 0; gap: 14px; padding: 0 12px; border-bottom: 1px solid var(--border); background: var(--surface); }
+.map-detail-tabs[hidden] { display: none; }
+.map-detail-tabs button { height: 32px; border-bottom: 2px solid transparent; color: var(--muted); font-size: 11px; }
+.map-detail-tabs button[aria-selected="true"] { border-bottom-color: var(--accent); color: var(--foreground); }
+.map-detail-tabs button:focus-visible { outline-offset: -2px; }
+.map-detail-body { background: var(--surface); scrollbar-width: thin; }
+.map-detail-section { padding: 12px; border-bottom: 1px solid var(--border); }
+.map-detail-section h3 { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 8px; font-size: 11px; font-weight: 500; }
+.map-detail-section h3 > span { color: var(--muted); font-variant-numeric: tabular-nums; }
+.map-detail-name { display: block; margin-bottom: 8px; overflow-wrap: anywhere; font-size: 12px; }
+.map-detail-facts { font-size: 11px; }
+.map-detail-facts > div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 3px 0; }
+.map-detail-facts dt { color: var(--muted); }
+.map-detail-facts dd { text-align: right; font-variant-numeric: tabular-nums; }
+.map-detail-note, .map-detail-empty { color: var(--muted); font-size: 11px; line-height: 1.5; }
+.map-detail-note { margin: 6px 0; }
+.map-detail-list { max-height: 240px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.map-detail-list li + li { border-top: 1px solid var(--border); }
+.map-detail-path { display: flex; align-items: baseline; gap: 8px; width: 100%; min-height: 28px; padding: 5px 4px; text-align: left; }
+.map-detail-path code { min-width: 0; flex: 1; overflow-wrap: anywhere; font-size: 10px; line-height: 1.5; }
+.map-detail-count { flex-shrink: 0; font-size: 10px; font-variant-numeric: tabular-nums; }
+.map-detail-path[data-hovered="true"] { background: color-mix(in srgb, var(--accent) 12%, var(--surface)); box-shadow: inset 2px 0 var(--accent); }
+.map-detail-path[aria-pressed="true"] { color: var(--accent); }
+.map-detail-path:focus-visible { outline-offset: -2px; }
+
+.map-summary-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 10px 8px 8px; border-bottom: 1px solid var(--border); }
+.map-summary-heading h2 { font-size: 12px; font-weight: 500; line-height: 1.5; overflow-wrap: anywhere; }
+.map-summary-heading p { margin-top: 2px; font-size: 10px; line-height: 1.5; }
+.map-summary-heading p > span { color: var(--muted); }
+.map-summary-info { display: grid; place-items: center; width: 18px; height: 18px; margin-top: 1px; flex-shrink: 0; border: 1px solid var(--muted); border-radius: 50%; font-family: var(--font-geist-mono), monospace; font-size: 12px; line-height: 1; }
+.map-summary-info[aria-expanded="true"] { color: var(--accent); border-color: var(--accent); }
+.map-summary-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-bottom: 1px solid var(--border); }
+.map-summary-stats > div { padding: 7px 8px; }
+.map-summary-stats > div + div { border-left: 1px solid var(--border); }
+.map-summary-stats dt { color: var(--muted); font-size: 10px; line-height: 1.4; }
+.map-summary-stats dd { font-size: 14px; line-height: 1.4; font-variant-numeric: tabular-nums; }
+.map-summary-stats .map-summary-subcount { color: var(--muted); font-size: 9px; white-space: nowrap; }
+.map-summary-coverage { padding: 8px; border-bottom: 1px solid var(--border); }
+.map-summary-section { padding: 11px 8px 0; }
+.map-summary-section h3 { display: flex; justify-content: space-between; gap: 4px; margin-bottom: 4px; font-size: 10px; font-weight: 400; line-height: 1.5; }
+.map-summary-section h3 small { color: var(--muted); font-size: inherit; }
+.map-summary-section h3 > span:last-child { flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.map-summary-path { align-items: center; min-height: 20px; height: 20px; padding: 1px 0; gap: 5px; }
+.map-summary-path code { display: flex; overflow: hidden; white-space: nowrap; font-size: 10px; line-height: 18px; }
+.map-path-directory { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.map-path-filename { flex-shrink: 0; }
+.map-summary-more, .map-summary-unknown { color: var(--muted); font-size: 9px; line-height: 1.5; }
+.map-summary-more { margin-top: 4px; }
+.map-summary-unknown { margin: 11px 8px; }
