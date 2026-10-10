@@ -107,10 +107,11 @@ export function MapDetails({ result, folders, details, selection, onSelect, insi
                 <dl className="map-detail-facts">
                   <div><dt>Files found</dt><dd>{result.coverage.filesFound}</dd></div>
                   <div><dt>Import occurrences</dt><dd>{result.coverage.imports.found}</dd></div>
+                  {result.coverage.byKind.require !== undefined && <div><dt>Require occurrences</dt><dd>{result.coverage.byKind.require.found}</dd></div>}
                   <div><dt>External imports</dt><dd>{result.coverage.imports.external}</dd></div>
                   <div><dt>Excluded imports</dt><dd>{result.coverage.imports.excluded}</dd></div>
                 </dl>
-                <p className="map-detail-note">Imports counts resolved connections between files. The Routes view lists only complete recovered patterns.</p>
+                <p className="map-detail-note">Imports counts resolved connections between files, including require calls. The Routes view lists only complete recovered patterns.</p>
               </div>
               <section className="map-summary-section">
                 <h3><span>Most depended on <small>by files importing it</small></span><span>{details.mostImported.length}</span></h3>
@@ -139,6 +140,11 @@ export function MapDetails({ result, folders, details, selection, onSelect, insi
                   <div><dt>Imports</dt><dd className="map-outgoing">{file.imports.length}</dd></div>
                   <div><dt>Dependents</dt><dd className="map-incoming">{file.dependents.length}</dd></div>
                 </dl>
+                {file.file.commonjsExports !== undefined && file.file.commonjsExports.length > 0 && <>
+                  <h3>CommonJS exports<span>{file.file.commonjsExports.length}</span></h3>
+                  <p className="map-detail-note"><code>{file.file.commonjsExports.join(", ")}</code></p>
+                  <p className="map-detail-note">Explicit declarations; computed names and opaque spreads are omitted.</p>
+                </>}
               </section>
               <section className="map-detail-section">
                 <div className="map-walk-actions" aria-label="Explore dependencies">

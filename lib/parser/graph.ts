@@ -1,6 +1,6 @@
 import type { ImportKind, ParsedEdge, ParsedFile } from "./types";
 
-const kindOrder: ImportKind[] = ["import", "re-export", "dynamic-import"];
+const kindOrder: ImportKind[] = ["import", "re-export", "dynamic-import", "require"];
 
 export function deduplicateEdges(edges: readonly ParsedEdge[]): ParsedEdge[] {
   const pairs = new Map<string, ParsedEdge>();

@@ -1,7 +1,7 @@
 import type { ts } from "ts-morph";
 
 /** Paths in this contract are repository-relative, use '/', and never contain '..'. */
-export type ImportKind = "import" | "re-export" | "dynamic-import";
+export type ImportKind = "import" | "re-export" | "dynamic-import" | "require";
 export type ImportStatus = "resolved" | "external" | "excluded" | "unresolved";
 
 export interface ParsedFile {
@@ -14,6 +14,8 @@ export interface ParsedFile {
   kind: string | null;
   fanIn: number;
   fanOut: number;
+  /** Explicit CommonJS declarations, not an evaluation of the runtime export object. Absent in old results. */
+  commonjsExports?: string[];
 }
 
 /** One edge per ordered file pair; kinds retain all syntax that produced it. */
@@ -57,7 +59,7 @@ export interface ParserCoverage {
   folders: number;
   skipped: SkippedFile[];
   imports: ImportCounts;
-  byKind: Record<ImportKind, ImportCounts>;
+  byKind: Record<Exclude<ImportKind, "require">, ImportCounts> & { require?: ImportCounts };
   /** Complete occurrence ledger, including every failure rather than a sampled count. */
   records: ImportRecord[];
 }

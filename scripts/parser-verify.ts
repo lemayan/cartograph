@@ -55,7 +55,7 @@ async function verify(): Promise<void> {
       "import 'undeclared-package';",
       "type Imported = import('./nested/value').Shape;",
       "import old = require('./nested/value');",
-      "require('./missing-require-is-out-of-scope');",
+      "require('./missing-require');",
       "// import './comment-is-not-an-import';",
       "console.log(\"import './string-is-not-an-import'\", value);",
     ].join("\n"));
@@ -68,10 +68,12 @@ async function verify(): Promise<void> {
     await put("package.json", JSON.stringify({ dependencies: { "declared-package": "1.0.0" } }));
     await put("tsconfig.json", JSON.stringify({ compilerOptions: { moduleResolution: "bundler", module: "esnext", paths: { "@nested/*": ["./nested/*"] } } }));
     const complex = validateParserResult(await parseRepository(root));
-    assert.equal(complex.coverage.imports.found, 16);
-    assert.equal(complex.coverage.imports.unresolved, 2);
+    assert.equal(complex.coverage.imports.found, 17);
+    assert.equal(complex.coverage.imports.unresolved, 3);
     assert.equal(complex.coverage.imports.external, 3);
-    assert.equal(complex.coverage.imports.excluded, 4);
+    assert.equal(complex.coverage.imports.excluded, 3);
+    assert.equal(complex.coverage.byKind.require?.found, 2);
+    assert.equal(complex.coverage.byKind.require?.resolved, 1);
     assert.equal(complex.coverage.byKind["re-export"].found, 4);
     assert.equal(complex.coverage.byKind["re-export"].resolved, 4);
     assert.equal(complex.coverage.skipped.find((file) => file.path === "broken.ts")?.reason, "syntax_error");

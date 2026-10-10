@@ -255,6 +255,7 @@ export type Database = {
       files: {
         Row: {
           analysis_id: string
+          commonjs_exports: string[] | null
           extension: string
           fan_in: number
           fan_out: number
@@ -270,6 +271,7 @@ export type Database = {
         }
         Insert: {
           analysis_id: string
+          commonjs_exports?: string[] | null
           extension: string
           fan_in: number
           fan_out: number
@@ -285,6 +287,7 @@ export type Database = {
         }
         Update: {
           analysis_id?: string
+          commonjs_exports?: string[] | null
           extension?: string
           fan_in?: number
           fan_out?: number

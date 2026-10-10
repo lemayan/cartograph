@@ -7,6 +7,7 @@ import { compare, deduplicateEdges, withFanCounts } from "./graph";
 import { inventory, relativePath } from "./inventory";
 import { ImportResolver } from "./resolution";
 import { countImports } from "./coverage";
+import { commonjsExportNames, commonjsIdentifier } from "./commonjs";
 import type { AdapterFile, FrameworkAdapter, ImportKind, ImportRecord, ParsedEdge, ParsedFile, ParserResult } from "./types";
 
 export async function selectRepository(directory: string) {
@@ -62,6 +63,7 @@ export async function parseSelectedRepository(selection: Awaited<ReturnType<type
     });
   }
   const program = project.getProgram().compilerObject;
+  const checker = program.getTypeChecker();
   const parsed: ParsedFile[] = [];
   for (const file of files) {
     const source = project.getSourceFileOrThrow(path.join(root, file.path)).compilerNode;
@@ -74,6 +76,7 @@ export async function parseSelectedRepository(selection: Awaited<ReturnType<type
       continue;
     }
     file.module = ts.isExternalModule(source) ? "module" : "script";
+    file.commonjsExports = commonjsExportNames(source, checker);
     parsed.push(file);
   }
   const adapterFiles: AdapterFile[] = parsed.map((file) => {
@@ -90,12 +93,10 @@ export async function parseSelectedRepository(selection: Awaited<ReturnType<type
   const edges: ParsedEdge[] = [];
   for (const file of parsed) {
     const source = project.getSourceFileOrThrow(path.join(root, file.path)).compilerNode;
-    function record(node: ts.Node, expression: ts.Node | undefined, kind: ImportKind, typeOnly: boolean, unsupported = false): void {
+    function record(node: ts.Node, expression: ts.Node | undefined, kind: ImportKind, typeOnly: boolean): void {
       const position = source.getLineAndCharacterOfPosition(node.getStart(source));
       const literal = expression && ts.isStringLiteralLike(expression) ? expression : null;
-      const resolution = unsupported
-        ? { status: "excluded" as const, target: null, reason: "require_not_supported_in_phase_03" }
-        : literal ? resolver.resolve(literal.text, source, literal)
+      const resolution = literal ? resolver.resolve(literal.text, source, literal)
           : { status: "unresolved" as const, target: null, reason: "non_literal_import: target is not a literal string" };
       const found: ImportRecord = {
         source: file.path, line: position.line + 1, column: position.character + 1,
@@ -117,10 +118,12 @@ export async function parseSelectedRepository(selection: Awaited<ReturnType<type
         record(node, node.moduleSpecifier, "re-export", Boolean(node.isTypeOnly || allTypeOnly));
       } else if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
         record(node, node.arguments[0], "dynamic-import", false);
+      } else if (ts.isCallExpression(node) && commonjsIdentifier(node.expression, "require", checker)) {
+        record(node, node.arguments.length === 1 ? node.arguments[0] : undefined, "require", false);
       } else if (ts.isImportTypeNode(node)) {
         record(node, ts.isLiteralTypeNode(node.argument) ? node.argument.literal : node.argument, "import", true);
       } else if (ts.isImportEqualsDeclaration(node) && ts.isExternalModuleReference(node.moduleReference)) {
-        record(node, node.moduleReference.expression, "import", node.isTypeOnly, true);
+        record(node, node.moduleReference.expression, "require", node.isTypeOnly);
       }
       ts.forEachChild(node, visit);
     }
@@ -146,6 +149,7 @@ export async function parseSelectedRepository(selection: Awaited<ReturnType<type
         import: countImports(records.filter((record) => record.kind === "import")),
         "re-export": countImports(records.filter((record) => record.kind === "re-export")),
         "dynamic-import": countImports(records.filter((record) => record.kind === "dynamic-import")),
+        require: countImports(records.filter((record) => record.kind === "require")),
       },
       records,
     },

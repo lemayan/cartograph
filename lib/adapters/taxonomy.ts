@@ -18,11 +18,16 @@ const nest: RoleCategory[] = [
   { id: "guard", label: "Guards" }, { id: "interceptor", label: "Interceptors" },
   { id: "middleware", label: "Middleware" }, { id: "pipe", label: "Pipes" }, { id: "filter", label: "Filters" }, ...shared,
 ];
+const express: RoleCategory[] = [
+  { id: "route", label: "Routers" }, { id: "controller", label: "Controllers" },
+  { id: "service", label: "Services" }, { id: "model", label: "Models" },
+  { id: "middleware", label: "Middleware" }, ...shared.filter((role) => role.id !== "type"),
+];
 export function frameworkCategories(framework: string): readonly RoleCategory[] {
-  return framework === "nextjs" ? next : framework === "nestjs" ? nest : framework === "react" ? react : [shared[shared.length - 1]];
+  return framework === "nextjs" ? next : framework === "nestjs" ? nest : framework === "react" ? react : framework === "express" ? express : [shared[shared.length - 1]];
 }
 export function frameworkLabel(framework: string) {
-  return framework === "nextjs" ? "Next.js" : framework === "nestjs" ? "NestJS" : framework === "react" ? "React" : "Generic";
+  return framework === "nextjs" ? "Next.js" : framework === "nestjs" ? "NestJS" : framework === "react" ? "React" : framework === "express" ? "Express" : "Generic";
 }
 export function roleFiles(files: readonly ParsedFile[], framework: string, category: string | null): Set<string> | null {
   if (category === null) return null;

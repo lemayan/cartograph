@@ -14,6 +14,7 @@
 .map-detail-facts dd { text-align: right; font-variant-numeric: tabular-nums; }
 .map-detail-note, .map-detail-empty { color: var(--muted); font-size: 11px; line-height: 1.5; }
 .map-detail-note { margin: 6px 0; }
+.map-detail-note code { overflow-wrap: anywhere; }
 .map-detail-list { max-height: 240px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
 .map-detail-list li + li { border-top: 1px solid var(--border); }
 .map-detail-path { display: flex; align-items: baseline; gap: 8px; width: 100%; min-height: 28px; padding: 5px 4px; text-align: left; }

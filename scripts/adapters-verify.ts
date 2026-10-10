@@ -93,6 +93,37 @@ async function verify() {
     const react = await analyse(reactDirectory); assert.equal(react.adapter, "react"); assert.deepEqual(react.routes, []);
     assert.equal(react.files.find((file) => file.path === "src/Button.tsx")?.kind, "component");
     assert.equal(react.files.find((file) => file.path === "src/context.ts")?.kind, "context");
+    const expressFiles: Record<string, string> = {
+      "package.json": '{"dependencies":{"express":"5"}}',
+      "src/app.js": 'const router = require("./routes/users");',
+      "src/routes/users.js": 'const controller = require("../controllers/users"); router.get("/users", controller.list);',
+      "src/controllers/users.js": 'exports.list = () => {};',
+      "src/routes/test/users.js": 'exports.test = 1;',
+      "src/controllers/users.spec.js": 'exports.test = 1;',
+      "packages/other/package.json": '{}',
+      "packages/other/controllers/users.js": 'exports.generic = 1;',
+      "packages/server/package.json": '{"devDependencies":{"express":"5"}}',
+      "packages/server/model/user.js": 'module.exports = {};',
+    };
+    for (const [role, names] of Object.entries({ route: ["route", "routes", "router", "routers"], controller: ["controller", "controllers"],
+      service: ["service", "services"], model: ["model", "models"], middleware: ["middleware", "middlewares"],
+      utility: ["util", "utils", "utility", "utilities", "lib", "libs"], test: ["test", "tests"], config: ["config", "configs"] })) {
+      for (const name of names) expressFiles[`src/${name}/fixture.js`] = `exports.${role} = 1;`;
+    }
+    const expressDirectory = await fixture("express", expressFiles);
+    const express = await analyse(expressDirectory); assert.equal(express.adapter, "express"); assert.deepEqual(express.routes, []);
+    for (const [filename, contents] of Object.entries(expressFiles)) if (filename.endsWith("fixture.js")) {
+      assert.equal(express.files.find((file) => file.path === filename)?.kind, contents.match(/exports\.(\w+)/)?.[1]);
+    }
+    assert.equal(express.files.find((file) => file.path === "src/routes/test/users.js")?.kind, "test");
+    assert.equal(express.files.find((file) => file.path === "src/controllers/users.spec.js")?.kind, "test");
+    assert.equal(express.files.find((file) => file.path === "src/app.js")?.kind, null);
+    assert.equal(express.files.find((file) => file.path === "packages/other/controllers/users.js")?.kind, null);
+    assert.equal(express.files.find((file) => file.path === "packages/server/model/user.js")?.kind, "model");
+    assert.deepEqual(frameworkCategories(express.adapter).slice(0, 5).map((role) => role.label), ["Routers", "Controllers", "Services", "Models", "Middleware"]);
+    await writeFile(path.join(expressDirectory, "package.json"), '{"dependencies":{"express":"5","react":"19"}}');
+    assert.equal((await analyse(expressDirectory)).adapter, "react");
+    console.log("PASS: Express singular/plural conventions, test precedence, nearest package ownership, real require edges, fixed role counts, existing detection precedence and zero route extraction.");
     const fallback = await analyse(await fixture("generic", { "entry.ts": 'import {n} from "./other";export {n}', "other.ts": 'export const n=1;' }));
     assert.equal(fallback.adapter, "none"); assert.ok(fallback.files.every((file) => file.kind === null)); assert.deepEqual(fallback.routes, []);
     assert.throws(() => validateParserResult({ ...next, routes: [{file:"absent.ts",method:"GET",path:"/",line:1}] }), /Invalid recovered route/);
