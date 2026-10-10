@@ -1,19 +1,20 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { DependencyMap } from "./dependency-map";
+import { DependencyMap, type MapNavigator } from "./dependency-map";
 import { MapDetails } from "./map-details";
 import { repositoryDetails } from "@/lib/map/details";
 import { createHoverController, createHoverStore } from "@/lib/map/hover";
 import { MapHoverProvider } from "./map-hover";
 import type { MapSelection } from "@/lib/map/scene";
 import { foldFolders } from "@/lib/map/folding";
-import { compare } from "@/lib/parser/graph";
 import type { ParserResult } from "@/lib/parser/types";
-import { categoryFiles } from "@/lib/map/categories";
+import { frameworkCategories, frameworkLabel, roleFiles } from "@/lib/adapters/taxonomy";
+import { RoutesTable } from "./routes-table";
 import { repositoryInsights } from "@/lib/graph/analysis";
 import { frameworkEntryFiles } from "@/lib/adapters/entry-files";
 import "./map-shell.css";
+import type { ExplanationSetup } from "@/lib/explanations/types";
 
 function hoverTarget(target: EventTarget | null, root: HTMLElement): MapSelection | null {
   if (!(target instanceof Element)) return null;
@@ -24,10 +25,16 @@ function hoverTarget(target: EventTarget | null, root: HTMLElement): MapSelectio
   return null;
 }
 
-export function MapShell({ result }: { result: ParserResult }) {
+export function MapShell({ result, sourceBase, explanationSetup }: { result: ParserResult; sourceBase?: string; explanationSetup?: ExplanationSetup }) {
   const [selection, setSelection] = useState<MapSelection | null>(null);
   const [category, setCategory] = useState<string | null>(null);
-  const matches = useMemo(() => categoryFiles(result.files, category), [result.files, category]);
+  const [view, setView] = useState<"map" | "routes">("map");
+  const navigator = useRef<MapNavigator>(null);
+  function navigate(target: MapSelection) {
+    setView("map"); setCategory(null); setSelection(target);
+    navigator.current?.focus(target);
+  }
+  const matches = useMemo(() => roleFiles(result.files, result.adapter, category), [result.files, result.adapter, category]);
   const insights = useMemo(() => repositoryInsights(result.files, result.edges, frameworkEntryFiles(result.files)), [result]);
   const folded = useMemo(() => foldFolders(result.files, result.edges), [result]);
   const hoverStore = useMemo(() => createHoverStore(folded.folders), [folded]);
@@ -45,11 +52,7 @@ export function MapShell({ result }: { result: ParserResult }) {
     };
   }, [hoverController]);
   const details = useMemo(() => repositoryDetails(result.files, result.edges), [result]);
-  const categories = new Map<string, number>();
-  for (const file of result.files) {
-    categories.set(file.extension, (categories.get(file.extension) ?? 0) + 1);
-  }
-  const sortedCategories = [...categories].sort(([a, countA], [b, countB]) => countB - countA || compare(a, b));
+  const categories = frameworkCategories(result.adapter).map((role) => ({ ...role, count: roleFiles(result.files, result.adapter, role.id)?.size ?? 0 }));
   return (
     <MapHoverProvider value={hoverStore}>
     <div className="map-shell"
@@ -75,18 +78,18 @@ export function MapShell({ result }: { result: ParserResult }) {
       }}>
       <aside className="map-shell-pane" aria-labelledby="map-categories-heading">
         <header className="map-shell-heading">
-          <h2 id="map-categories-heading">File categories</h2>
+          <h2 id="map-categories-heading">{frameworkLabel(result.adapter)}</h2>
           <span className="map-category-total">{result.files.length} files</span>
         </header>
         <div className="map-shell-body">
           <ul className="map-categories">
-            {sortedCategories.map(([extension, count]) => (
-              <li key={extension}>
-                <button type="button" aria-pressed={category === extension}
-                  aria-label={`${extension}, ${count} files${category === extension ? ", click to clear category" : ""}`}
-                  onClick={() => setCategory((previous) => previous === extension ? null : extension)}>
-                  <span className="map-category-swatch" data-extension={extension} aria-hidden="true" />
-                  <code>{extension}</code>
+            {categories.map(({ id, label, count }) => (
+              <li key={id}>
+                <button type="button" aria-pressed={category === id}
+                  aria-label={`${label}, ${count} files${category === id ? ", click to clear category" : ""}`}
+                  onClick={() => setCategory((previous) => previous === id ? null : id)}>
+                  <span className="map-category-swatch" data-role={id} aria-hidden="true" />
+                  <span className="map-category-label">{label}</span>
                   <span className="map-category-count">{count}</span>
                 </button>
               </li>
@@ -98,14 +101,19 @@ export function MapShell({ result }: { result: ParserResult }) {
       <section className="map-shell-pane map-shell-canvas" aria-labelledby="map-canvas-heading">
         <header className="map-shell-heading">
           <h2 id="map-canvas-heading">Map</h2>
+          <div className="map-view-controls" role="group" aria-label="Repository view">
+            <button type="button" aria-pressed={view === "map"} onClick={() => setView("map")}>Map</button>
+            <button type="button" aria-pressed={view === "routes"} onClick={() => setView("routes")}>Routes {result.routes?.length ?? "—"}</button>
+          </div>
           <code className="map-repository-name" title={result.repository}>{result.repository}</code>
           <span className="map-folder-count">{folded.folders.length} folders</span>
         </header>
-        <div className="map-shell-body map-canvas-body"><DependencyMap files={result.files} edges={result.edges}
-          selection={selection} onSelect={setSelection} categoryMatches={matches} /></div>
+        <div className="map-shell-body map-canvas-body" hidden={view !== "map"}><DependencyMap files={result.files} edges={result.edges}
+          selection={selection} onSelect={setSelection} categoryMatches={matches} navigateRef={navigator} /></div>
+        <div className="map-shell-body" hidden={view !== "routes"}><RoutesTable routes={result.routes} sourceBase={sourceBase} onSelect={setSelection} /></div>
       </section>
       <MapDetails result={result} folders={folded.folders} details={details} selection={selection}
-        onSelect={setSelection} insights={insights} categoryMatches={matches} />
+        onSelect={setSelection} insights={insights} categoryMatches={matches} explanationSetup={explanationSetup} onNavigate={navigate} />
     </div>
     </MapHoverProvider>
   );

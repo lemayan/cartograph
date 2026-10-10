@@ -4,6 +4,8 @@ import { publicRepository } from "./repository";
 import { analysisWriter, type AnalysisStatus, type PipelineStage } from "./writer";
 import { selectRepository, parseSelectedRepository } from "../parser/parse";
 import { validateParserResult } from "../parser/contract";
+import { detectAdapter } from "../adapters/detect";
+import { classifyUnmatched } from "../ai/roles";
 
 export interface PipelineOutcome {
   analysisId: string;
@@ -35,14 +37,15 @@ export async function executeRepositoryAnalysis(repositoryUrl: string, organizat
     await writer.advance(reserved.analysisId, reserved.runId, stage, "Selecting TypeScript and JavaScript files by repository structure.", archive.commitSha);
     const selected = await selectRepository(archive.directory);
     stage = "parsing";
-    await writer.advance(reserved.analysisId, reserved.runId, stage, `Parsing ${selected.candidates.length} files, ${selected.skipped.length} skipped.`);
-    const result = validateParserResult(await parseSelectedRepository(selected));
-    // No source is needed after parsing. Clean up before committing a complete result.
+    await writer.advance(reserved.analysisId, reserved.runId, stage, `Parsing ${selected.candidates.length} files and labelling unmatched roles, ${selected.skipped.length} skipped.`);
+    const result = validateParserResult(await parseSelectedRepository(selected, await detectAdapter(selected)));
+    const roles = await classifyUnmatched(result, archive.directory, writer.cache);
+    // Source is no longer needed after role labelling. Clean up before committing a complete result.
     await archive.cleanup();
     archive = null;
     stage = "storing";
     await writer.advance(reserved.analysisId, reserved.runId, stage, `Storing ${result.files.length} files and ${result.edges.length} resolved imports.`);
-    await writer.store(reserved.analysisId, reserved.runId, result);
+    await writer.store(reserved.analysisId, reserved.runId, result, roles);
     return { ...reserved, status: "complete" };
   } catch (error) {
     const errors: unknown[] = [error];

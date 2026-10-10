@@ -1,6 +1,6 @@
 import path from "node:path";
 import { readParserResult, validateParserResult, writeParserResult } from "../lib/parser/data";
-import { parseRepository } from "../lib/parser/parse";
+import { parseFrameworkRepository } from "../lib/adapters/parse-repository";
 import type { ParserResult } from "../lib/parser/types";
 
 function report(result: ParserResult): void {
@@ -8,6 +8,8 @@ function report(result: ParserResult): void {
   console.log(`Repository: ${result.repository} | schema ${result.schemaVersion} | adapter ${result.adapter}`);
   console.log(`Files found: ${coverage.filesFound} | parsed: ${coverage.filesParsed} | skipped: ${coverage.filesSkipped} | distinct folders: ${coverage.folders}`);
   console.log(`Edges: ${result.edges.length} (unique ordered file pairs)`);
+  console.log(`Routes: ${result.routes?.length ?? "not extracted"}`);
+  for (const route of result.routes ?? []) console.log(`Route ${route.method} ${route.path} -> ${route.file}:${route.line}`);
   const skips = new Map<string, { count: number; example: string }>();
   for (const skip of coverage.skipped) {
     const existing = skips.get(skip.reason);
@@ -39,7 +41,7 @@ async function main(): Promise<void> {
   if (!((args.length === 1 || (args.length === 3 && args[1] === "--out")) && !args[0].startsWith("--"))) {
     throw new Error("Usage: pnpm parser <directory> [--out <file.json>] | pnpm parser --read <file.json>");
   }
-  const result = validateParserResult(await parseRepository(args[0]));
+  const result = validateParserResult(await parseFrameworkRepository(args[0]));
   report(result);
   if (args[2]) {
     await writeParserResult(args[2], result);

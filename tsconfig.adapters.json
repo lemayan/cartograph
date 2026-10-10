@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.parser.json",
+  "compilerOptions": { "outDir": ".cartograph/adapters" },
+  "include": ["lib/parser/**/*.ts", "lib/adapters/**/*.ts", "scripts/adapters-verify.ts"]
+}

@@ -5,14 +5,18 @@
   "packageManager": "pnpm@12.10.1",
   "scripts": {
     "dev": "next dev",
+    "ai:verify": "tsc -p tsconfig.ai.json && node --conditions=react-server .cartograph/ai/scripts/ai-verify.js && node .cartograph/ai/scripts/explanation-prose-verify.js",
+    "ai:verify:live": "tsc -p tsconfig.ai.json && node --env-file=.env.local --conditions=react-server .cartograph/ai/scripts/ai-live-verify.js",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "parser": "tsc -p tsconfig.parser.json && node .cartograph/parser/scripts/parser.js",
     "parser:verify": "tsc -p tsconfig.parser.json && node .cartograph/parser/scripts/parser-verify.js",
+    "parser:verify:commonjs": "tsc -p tsconfig.parser.json && node .cartograph/parser/scripts/parser-commonjs-verify.js",
     "map:verify": "tsc -p tsconfig.map.json && node .cartograph/map/scripts/map-verify.js",
     "graph:verify": "tsc -p tsconfig.map.json && node .cartograph/map/scripts/graph-verify.js",
+    "adapters:verify": "tsc -p tsconfig.adapters.json && node .cartograph/adapters/scripts/adapters-verify.js",
     "pipeline:verify": "tsc -p tsconfig.pipeline.json && node --conditions=react-server .cartograph/pipeline/scripts/pipeline-verify.js",
     "pipeline:verify:live": "tsc -p tsconfig.pipeline.json && node --env-file=.env.local --conditions=react-server .cartograph/pipeline/scripts/pipeline-verify.js --live"
   },
@@ -21,7 +25,9 @@
     "@dagrejs/dagre": "^3.1.1",
     "@supabase/supabase-js": "2.117.2",
     "@xyflow/react": "^12.12.0",
+    "langsmith": "0.10.9",
     "next": "16.3.8",
+    "openai": "7.31.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "ts-morph": "^28.0.0"

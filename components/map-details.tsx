@@ -2,12 +2,15 @@
 
 import { useMemo, useRef, useState, type KeyboardEvent } from "react";
 import type { ParserResult, ParsedFile } from "@/lib/parser/types";
+import { frameworkLabel } from "@/lib/adapters/taxonomy";
 import type { FoldedFolder } from "@/lib/map/folding";
 import type { MapSelection } from "@/lib/map/scene";
 import { countFileKinds, selectionFiles, type RepositoryDetails } from "@/lib/map/details";
 import { useMapHover } from "./map-hover";
 import { insightSentences, walkDependencies, type RepositoryInsights, type WalkDirection } from "@/lib/graph/analysis";
 import "./map-details.css";
+import { ExplanationPane } from "./explanation-pane";
+import type { ExplanationSetup } from "@/lib/explanations/types";
 
 type Tab = "structure" | "explanation";
 interface DetailProps {
@@ -18,9 +21,11 @@ interface DetailProps {
   onSelect: (selection: MapSelection) => void;
   insights: RepositoryInsights;
   categoryMatches: ReadonlySet<string> | null;
+  explanationSetup?: ExplanationSetup;
+  onNavigate: (selection: MapSelection) => void;
 }
 
-export function MapDetails({ result, folders, details, selection, onSelect, insights, categoryMatches }: DetailProps) {
+export function MapDetails({ result, folders, details, selection, onSelect, insights, categoryMatches, explanationSetup, onNavigate }: DetailProps) {
   const hover = useMapHover();
   const [tab, setTab] = useState<Tab>("structure");
   const [showCoverage, setShowCoverage] = useState(false);
@@ -90,7 +95,7 @@ export function MapDetails({ result, folders, details, selection, onSelect, insi
               <section className="map-summary-heading">
                 <div>
                   <h2 id="map-summary-name"><code>{result.repository}</code></h2>
-                  <p><span>Framework</span> {result.adapter === "none" ? "none detected" : result.adapter}</p>
+                  <p><span>Framework</span> {frameworkLabel(result.adapter)}</p>
                 </div>
                 <button className="map-summary-info" type="button" aria-label="Repository coverage details"
                   aria-expanded={showCoverage} aria-controls="map-summary-coverage" onClick={() => setShowCoverage((previous) => !previous)}>
@@ -100,16 +105,17 @@ export function MapDetails({ result, folders, details, selection, onSelect, insi
               <dl className="map-summary-stats">
                 <div><dt>Files</dt><dd>{result.files.length}</dd><dd className="map-summary-subcount">{result.coverage.filesSkipped} skipped</dd></div>
                 <div title="Resolved imports between repository files"><dt>Imports</dt><dd>{details.importCount}</dd><dd className="map-summary-subcount">{result.coverage.imports.unresolved} unresolved</dd></div>
-                <div><dt>Routes</dt><dd aria-label="Not available">—</dd><dd className="map-summary-subcount">no adapter</dd></div>
+                <div><dt>Routes</dt><dd>{result.routes?.length ?? "—"}</dd><dd className="map-summary-subcount">{result.routes === undefined ? "not extracted" : "recovered patterns"}</dd></div>
               </dl>
               <div id="map-summary-coverage" className="map-summary-coverage" hidden={!showCoverage}>
                 <dl className="map-detail-facts">
                   <div><dt>Files found</dt><dd>{result.coverage.filesFound}</dd></div>
                   <div><dt>Import occurrences</dt><dd>{result.coverage.imports.found}</dd></div>
+                  {result.coverage.byKind.require !== undefined && <div><dt>Require occurrences</dt><dd>{result.coverage.byKind.require.found}</dd></div>}
                   <div><dt>External imports</dt><dd>{result.coverage.imports.external}</dd></div>
                   <div><dt>Excluded imports</dt><dd>{result.coverage.imports.excluded}</dd></div>
                 </dl>
-                <p className="map-detail-note">Imports counts resolved connections between files. Route information is not present in this analysis.</p>
+                <p className="map-detail-note">Imports counts resolved connections between files, including require calls. The Routes view lists only complete recovered patterns.</p>
               </div>
               <section className="map-summary-section">
                 <h3><span>Most depended on <small>by files importing it</small></span><span>{details.mostImported.length}</span></h3>
@@ -125,7 +131,7 @@ export function MapDetails({ result, folders, details, selection, onSelect, insi
                 </ol> : <p className="map-detail-empty">Every file has an incoming import.</p>}
                 {details.startingPoints.length > 10 && <p className="map-summary-more">{details.startingPoints.length - 10} more not listed</p>}
               </section>
-              <p className="map-summary-unknown">{details.unknownCount} files with unknown kind</p>
+              <p className="map-summary-unknown">{details.unknownCount} generic files</p>
             </>
           )}
           {file && (
@@ -133,11 +139,16 @@ export function MapDetails({ result, folders, details, selection, onSelect, insi
               <section className="map-detail-section">
                 <h3>File</h3>{pathButton(file.file)}
                 <dl className="map-detail-facts">
-                  <div><dt>Kind</dt><dd>{file.file.kind ?? "Unknown"}</dd></div>
+                  <div><dt>Kind</dt><dd>{file.file.kind ?? "Generic"}</dd></div>
                   <div><dt>Lines</dt><dd>{file.file.lines}</dd></div>
                   <div><dt>Imports</dt><dd className="map-outgoing">{file.imports.length}</dd></div>
                   <div><dt>Dependents</dt><dd className="map-incoming">{file.dependents.length}</dd></div>
                 </dl>
+                {file.file.commonjsExports !== undefined && file.file.commonjsExports.length > 0 && <>
+                  <h3>CommonJS exports<span>{file.file.commonjsExports.length}</span></h3>
+                  <p className="map-detail-note"><code>{file.file.commonjsExports.join(", ")}</code></p>
+                  <p className="map-detail-note">Explicit declarations; computed names and opaque spreads are omitted.</p>
+                </>}
               </section>
               <section className="map-detail-section">
                 <div className="map-walk-actions" aria-label="Explore dependencies">
@@ -177,7 +188,7 @@ export function MapDetails({ result, folders, details, selection, onSelect, insi
               <section className="map-detail-section">
                 <h3>File kinds</h3>
                 <dl className="map-detail-facts">{countFileKinds(folder.files).map(({ kind, count }) => (
-                  <div key={kind ?? "unknown"}><dt>{kind ?? "Unknown"}</dt><dd>{count}</dd></div>
+                  <div key={kind ?? "unknown"}><dt>{kind ?? "Generic"}</dt><dd>{count}</dd></div>
                 ))}</dl>
               </section>
               {fileList("Files", folder.files)}
@@ -185,13 +196,8 @@ export function MapDetails({ result, folders, details, selection, onSelect, insi
           )}
         </div>
         <div id="map-explanation-panel" role="tabpanel" aria-labelledby="map-explanation-tab" hidden={!selection || tab !== "explanation"}>
-          <section className="map-detail-section">
-            <h3>Explanation</h3>
-            <p className="map-detail-empty">No explanation has been generated.</p>
-            {file && pathButton(file.file)}
-            {folder && <code className="map-detail-name">{folder.path}</code>}
-            {!selection && <p className="map-detail-name">{result.repository}</p>}
-          </section>
+          <ExplanationPane setup={explanationSetup} selection={selection} result={result}
+            folders={folders.map((folder) => folder.path)} onSelect={onNavigate} />
         </div>
         <details className="map-insights">
           <summary>Insights <span>From parsed files and imports</span></summary>

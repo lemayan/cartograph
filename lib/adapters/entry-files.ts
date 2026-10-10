@@ -1,6 +1,6 @@
 import type { ParsedFile } from "../parser/types";
 
-const entryKinds = new Set(["page", "route", "layout", "middleware", "proxy", "config"]);
+const entryKinds = new Set(["page", "route", "action", "controller", "module", "layout", "middleware", "proxy", "config"]);
 const appEntries = new Set(["page", "route", "layout", "template", "loading", "error", "global-error", "not-found", "default",
   "sitemap", "robots", "manifest", "icon", "apple-icon", "opengraph-image", "twitter-image", "instrumentation-client"]);
 
