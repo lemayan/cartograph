@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { DependencyMap } from "./dependency-map";
+import { DependencyMap, type MapNavigator } from "./dependency-map";
 import { MapDetails } from "./map-details";
 import { repositoryDetails } from "@/lib/map/details";
 import { createHoverController, createHoverStore } from "@/lib/map/hover";
@@ -14,6 +14,7 @@ import { RoutesTable } from "./routes-table";
 import { repositoryInsights } from "@/lib/graph/analysis";
 import { frameworkEntryFiles } from "@/lib/adapters/entry-files";
 import "./map-shell.css";
+import type { ExplanationSetup } from "@/lib/explanations/types";
 
 function hoverTarget(target: EventTarget | null, root: HTMLElement): MapSelection | null {
   if (!(target instanceof Element)) return null;
@@ -24,10 +25,15 @@ function hoverTarget(target: EventTarget | null, root: HTMLElement): MapSelectio
   return null;
 }
 
-export function MapShell({ result, sourceBase }: { result: ParserResult; sourceBase?: string }) {
+export function MapShell({ result, sourceBase, explanationSetup }: { result: ParserResult; sourceBase?: string; explanationSetup?: ExplanationSetup }) {
   const [selection, setSelection] = useState<MapSelection | null>(null);
   const [category, setCategory] = useState<string | null>(null);
   const [view, setView] = useState<"map" | "routes">("map");
+  const navigator = useRef<MapNavigator>(null);
+  function navigate(target: MapSelection) {
+    setView("map"); setCategory(null); setSelection(target);
+    navigator.current?.focus(target);
+  }
   const matches = useMemo(() => roleFiles(result.files, result.adapter, category), [result.files, result.adapter, category]);
   const insights = useMemo(() => repositoryInsights(result.files, result.edges, frameworkEntryFiles(result.files)), [result]);
   const folded = useMemo(() => foldFolders(result.files, result.edges), [result]);
@@ -103,11 +109,11 @@ export function MapShell({ result, sourceBase }: { result: ParserResult; sourceB
           <span className="map-folder-count">{folded.folders.length} folders</span>
         </header>
         <div className="map-shell-body map-canvas-body" hidden={view !== "map"}><DependencyMap files={result.files} edges={result.edges}
-          selection={selection} onSelect={setSelection} categoryMatches={matches} /></div>
+          selection={selection} onSelect={setSelection} categoryMatches={matches} navigateRef={navigator} /></div>
         <div className="map-shell-body" hidden={view !== "routes"}><RoutesTable routes={result.routes} sourceBase={sourceBase} onSelect={setSelection} /></div>
       </section>
       <MapDetails result={result} folders={folded.folders} details={details} selection={selection}
-        onSelect={setSelection} insights={insights} categoryMatches={matches} />
+        onSelect={setSelection} insights={insights} categoryMatches={matches} explanationSetup={explanationSetup} onNavigate={navigate} />
     </div>
     </MapHoverProvider>
   );

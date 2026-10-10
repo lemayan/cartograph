@@ -1,4 +1,17 @@
 .map-detail-tabs { display: flex; flex-shrink: 0; gap: 14px; padding: 0 12px; border-bottom: 1px solid var(--border); background: var(--surface); }
+.explanation-actions { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; font-size: 10px; color: var(--muted); }
+.explanation-actions button, .explanation-notice button { padding: 4px 7px; border: 1px solid var(--border); border-radius: 3px; color: var(--accent); font-size: 11px; }
+.explanation-actions button:disabled { color: var(--muted); cursor: wait; }
+.explanation-prose { font-size: 11px; line-height: 1.65; overflow-wrap: anywhere; }
+.explanation-prose p + p, .explanation-prose ul { margin-top: 9px; }
+.explanation-prose ul { list-style: disc; padding-left: 16px; }
+.explanation-prose code { font-size: 10px; background: var(--map-rail); padding: 1px 2px; border-radius: 2px; }
+.explanation-prose strong { font-weight: 600; }
+.explanation-path { display: inline; color: var(--accent); font-family: var(--font-geist-mono), monospace; text-decoration: underline; text-underline-offset: 2px; text-align: left; overflow-wrap: anywhere; }
+.explanation-notice { margin-bottom: 10px; padding: 8px; border: 1px solid var(--border); font-size: 11px; line-height: 1.5; }
+.explanation-notice p { margin: 4px 0 7px; }
+.explanation-error { margin: 8px 0; font-size: 11px; line-height: 1.5; }
+.explanation-meta { margin-top: 12px; color: var(--muted); font-size: 9px; line-height: 1.6; overflow-wrap: anywhere; }
 .map-detail-tabs[hidden] { display: none; }
 .map-detail-tabs button { height: 32px; border-bottom: 2px solid transparent; color: var(--muted); font-size: 11px; }
 .map-detail-tabs button[aria-selected="true"] { border-bottom-color: var(--accent); color: var(--foreground); }

@@ -97,7 +97,8 @@
 .map-category-label { font-size: 11px; }
 .map-category-swatch[data-role="page"], .map-category-swatch[data-role="controller"] { background: var(--map-category-tsx); }
 .map-category-swatch[data-role="route"], .map-category-swatch[data-role="action"] { background: var(--map-category-js); }
-.map-category-swatch[data-role="component"], .map-category-swatch[data-role="service"], .map-category-swatch[data-role="model"] { background: var(--map-category-ts); }
+.map-category-swatch[data-role="component"], .map-category-swatch[data-role="service"], .map-category-swatch[data-role="model"], .map-category-swatch[data-role="repository"] { background: var(--map-category-ts); }
+.map-category-swatch[data-role="util"] { background: var(--map-category-js); }
 .map-view-controls { display: flex; gap: 3px; flex-shrink: 0; }
 .map-view-controls button { padding: 3px 7px; border: 1px solid var(--border); border-radius: 3px; color: var(--muted); background: var(--surface); font-size: 11px; }
 .map-view-controls button[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
