@@ -98,7 +98,8 @@ function verifyIndependentCycles() {
 async function verifySnapshot() {
   const args = process.argv.slice(2);
   if (args.length > 1) throw new Error("Usage: pnpm graph:verify [parser-output.json]");
-  const result = await readParserResult(args[0] ?? "data/preview/excalidraw.json");
+  if (args.length !== 1) throw new Error("Usage: pnpm graph:verify <parser-output.json>. Generate it with pnpm parser <repository-directory> --out <file.json>.");
+  const result = await readParserResult(args[0]);
   const before = JSON.stringify(result);
   const entries = frameworkEntryFiles(result.files);
   const insights = repositoryInsights(result.files, result.edges, entries);

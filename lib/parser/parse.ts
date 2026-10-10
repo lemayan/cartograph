@@ -7,12 +7,25 @@ import { compare, deduplicateEdges, withFanCounts } from "./graph";
 import { inventory, relativePath } from "./inventory";
 import { ImportResolver } from "./resolution";
 import { countImports } from "./coverage";
-import type { FrameworkAdapter, ImportKind, ImportRecord, ParsedEdge, ParsedFile, ParserResult } from "./types";
+import { commonjsExportNames, commonjsIdentifier } from "./commonjs";
+import type { AdapterFile, FrameworkAdapter, ImportKind, ImportRecord, ParsedEdge, ParsedFile, ParserResult } from "./types";
 
-export async function parseRepository(directory: string, adapter: FrameworkAdapter = fallbackAdapter): Promise<ParserResult> {
+export async function selectRepository(directory: string) {
   const root = await realpath(path.resolve(directory));
   if (!(await stat(root)).isDirectory()) throw new Error(`Not a directory: ${root}`);
   const walked = await inventory(root);
+  return { root, ...walked };
+}
+
+export async function parseRepository(directory: string, adapter: FrameworkAdapter = fallbackAdapter): Promise<ParserResult> {
+  return parseSelectedRepository(await selectRepository(directory), adapter);
+}
+
+export async function parseSelectedRepository(selection: Awaited<ReturnType<typeof selectRepository>>,
+  adapter: FrameworkAdapter = fallbackAdapter): Promise<ParserResult> {
+  const { root, ...walked } = selection;
+  // Parsing can add syntax/read exclusions without changing the selection supplied by the caller.
+  walked.skipped = [...walked.skipped];
   const project = new Project({
     skipAddingFilesFromTsConfig: true,
     skipFileDependencyResolution: true,
@@ -50,6 +63,7 @@ export async function parseRepository(directory: string, adapter: FrameworkAdapt
     });
   }
   const program = project.getProgram().compilerObject;
+  const checker = program.getTypeChecker();
   const parsed: ParsedFile[] = [];
   for (const file of files) {
     const source = project.getSourceFileOrThrow(path.join(root, file.path)).compilerNode;
@@ -62,20 +76,27 @@ export async function parseRepository(directory: string, adapter: FrameworkAdapt
       continue;
     }
     file.module = ts.isExternalModule(source) ? "module" : "script";
-    file.kind = adapter.classify({ path: file.path, folder: file.folder, module: file.module, contents: source.text });
+    file.commonjsExports = commonjsExportNames(source, checker);
     parsed.push(file);
   }
+  const adapterFiles: AdapterFile[] = parsed.map((file) => {
+    const syntax = project.getSourceFileOrThrow(path.join(root, file.path)).compilerNode;
+    return { path: file.path, folder: file.folder, module: file.module, contents: syntax.text, syntax };
+  });
+  adapter.prepare?.(adapterFiles);
+  const routes = adapterFiles.flatMap((file, index) => {
+    parsed[index].kind = adapter.classify(file);
+    return adapter.routes?.(file) ?? [];
+  });
   const resolver = new ImportResolver(root, parsed.map((file) => file.path), walked.skipped);
   const records: ImportRecord[] = [];
   const edges: ParsedEdge[] = [];
   for (const file of parsed) {
     const source = project.getSourceFileOrThrow(path.join(root, file.path)).compilerNode;
-    function record(node: ts.Node, expression: ts.Node | undefined, kind: ImportKind, typeOnly: boolean, unsupported = false): void {
+    function record(node: ts.Node, expression: ts.Node | undefined, kind: ImportKind, typeOnly: boolean): void {
       const position = source.getLineAndCharacterOfPosition(node.getStart(source));
       const literal = expression && ts.isStringLiteralLike(expression) ? expression : null;
-      const resolution = unsupported
-        ? { status: "excluded" as const, target: null, reason: "require_not_supported_in_phase_03" }
-        : literal ? resolver.resolve(literal.text, source, literal)
+      const resolution = literal ? resolver.resolve(literal.text, source, literal)
           : { status: "unresolved" as const, target: null, reason: "non_literal_import: target is not a literal string" };
       const found: ImportRecord = {
         source: file.path, line: position.line + 1, column: position.character + 1,
@@ -97,10 +118,12 @@ export async function parseRepository(directory: string, adapter: FrameworkAdapt
         record(node, node.moduleSpecifier, "re-export", Boolean(node.isTypeOnly || allTypeOnly));
       } else if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
         record(node, node.arguments[0], "dynamic-import", false);
+      } else if (ts.isCallExpression(node) && commonjsIdentifier(node.expression, "require", checker)) {
+        record(node, node.arguments.length === 1 ? node.arguments[0] : undefined, "require", false);
       } else if (ts.isImportTypeNode(node)) {
         record(node, ts.isLiteralTypeNode(node.argument) ? node.argument.literal : node.argument, "import", true);
       } else if (ts.isImportEqualsDeclaration(node) && ts.isExternalModuleReference(node.moduleReference)) {
-        record(node, node.moduleReference.expression, "import", node.isTypeOnly, true);
+        record(node, node.moduleReference.expression, "require", node.isTypeOnly);
       }
       ts.forEachChild(node, visit);
     }
@@ -114,6 +137,7 @@ export async function parseRepository(directory: string, adapter: FrameworkAdapt
     adapter: adapter.name,
     files: withFanCounts(parsed, deduplicated),
     edges: deduplicated,
+    routes,
     coverage: {
       filesFound: walked.found,
       filesParsed: parsed.length,
@@ -125,6 +149,7 @@ export async function parseRepository(directory: string, adapter: FrameworkAdapt
         import: countImports(records.filter((record) => record.kind === "import")),
         "re-export": countImports(records.filter((record) => record.kind === "re-export")),
         "dynamic-import": countImports(records.filter((record) => record.kind === "dynamic-import")),
+        require: countImports(records.filter((record) => record.kind === "require")),
       },
       records,
     },

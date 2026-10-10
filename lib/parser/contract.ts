@@ -41,7 +41,7 @@ function relative(value: unknown): string {
 }
 
 function kind(value: unknown): ImportKind {
-  if (value === "import" || value === "re-export" || value === "dynamic-import") return value;
+  if (value === "import" || value === "re-export" || value === "dynamic-import" || value === "require") return value;
   throw new Error("Invalid import kind in parser data");
 }
 
@@ -76,8 +76,14 @@ export function validateParserResult(value: unknown): ParserResult {
     if (row.module !== "module" && row.module !== "script") throw new Error(`Invalid module classification for ${filename}`);
     const extension = string(row.extension);
     if (extension !== path.posix.extname(filename)) throw new Error(`Wrong extension for ${filename}`);
-    return { path: filename, folder, hash, extension, lines: integer(row.lines), module: row.module,
+    const file: ParsedFile = { path: filename, folder, hash, extension, lines: integer(row.lines), module: row.module,
       kind: nullableString(row.kind), fanIn: integer(row.fanIn), fanOut: integer(row.fanOut) };
+    if (row.commonjsExports !== undefined) {
+      file.commonjsExports = array(row.commonjsExports).map(string);
+      if (file.commonjsExports.some((name) => !name || /[\x00-\x1f\x7f]/.test(name))
+        || new Set(file.commonjsExports).size !== file.commonjsExports.length) throw new Error("Invalid CommonJS export names");
+    }
+    return file;
   });
   const edges: ParsedEdge[] = array(data.edges).map((value) => {
     const row = object(value);
@@ -116,10 +122,26 @@ export function validateParserResult(value: unknown): ParserResult {
       folders: integer(coverage.folders), skipped, records, imports: counts(coverage.imports),
       byKind: { import: counts(byKind.import), "re-export": counts(byKind["re-export"]), "dynamic-import": counts(byKind["dynamic-import"]) } },
   };
+  if (byKind.require !== undefined) result.coverage.byKind.require = counts(byKind.require);
   if (!result.repository || !result.adapter) throw new Error("Repository and adapter names must be present");
   if (result.coverage.filesParsed !== files.length || result.coverage.filesSkipped !== skipped.length
     || result.coverage.filesFound !== files.length + skipped.length) throw new Error("File coverage does not add up");
   const paths = new Set(files.map((file) => file.path));
+  if (data.routes !== undefined) {
+    result.routes = array(data.routes).map((value) => {
+      const row = object(value);
+      const file = relative(row.file);
+      const method = string(row.method);
+      const pattern = string(row.path);
+      const line = integer(row.line);
+      if (!paths.has(file) || !/^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|ALL)$/.test(method)
+        || !pattern.startsWith("/") || /[\x00-\x1f\x7f?#]/.test(pattern) || !line
+        || line > (files.find((item) => item.path === file)?.lines ?? 0)) throw new Error("Invalid recovered route");
+      return { file, method, path: pattern, line };
+    });
+    const keys = result.routes.map((route) => JSON.stringify(route));
+    if (new Set(keys).size !== keys.length) throw new Error("Duplicate recovered route");
+  }
   if (paths.size !== files.length || new Set(skipped.map((file) => file.path)).size !== skipped.length
     || skipped.some((file) => paths.has(file.path))) throw new Error("Duplicate file or overlap in skipped/parsed inventory");
   if (result.coverage.folders !== new Set(files.map((file) => file.folder)).size) throw new Error("Folder count is wrong");
@@ -131,8 +153,10 @@ export function validateParserResult(value: unknown): ParserResult {
     ? [{ source: record.source, target: record.target, kinds: [record.kind] }] : []));
   if (JSON.stringify(deduplicateEdges(edges)) !== JSON.stringify(fromRecords)) throw new Error("Edge list does not match resolved imports");
   if (!sameCounts(result.coverage.imports, countImports(records))) throw new Error("Import totals do not match the ledger");
-  for (const importKind of ["import", "re-export", "dynamic-import"] as const) {
-    if (!sameCounts(result.coverage.byKind[importKind], countImports(records.filter((record) => record.kind === importKind)))) throw new Error(`Wrong coverage for ${importKind}`);
+  for (const importKind of ["import", "re-export", "dynamic-import", "require"] as const) {
+    const actual = result.coverage.byKind[importKind];
+    const expected = countImports(records.filter((record) => record.kind === importKind));
+    if (actual === undefined ? expected.found !== 0 : !sameCounts(actual, expected)) throw new Error(`Wrong coverage for ${importKind}`);
   }
   return result;
 }

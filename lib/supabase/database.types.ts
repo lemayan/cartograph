@@ -1,4 +1,3 @@
-// Generated from the Cartograph Supabase schema. Regenerate after schema changes.
 export type Json =
   | string
   | number
@@ -15,42 +14,110 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_cache: {
+        Row: {
+          content: string
+          created_at: string
+          input_hash: string
+          model: string
+          organization_id: string
+          task: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          input_hash: string
+          model: string
+          organization_id: string
+          task: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          input_hash?: string
+          model?: string
+          organization_id?: string
+          task?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_cache_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       analyses: {
         Row: {
+          adapter: string | null
           commit_sha: string | null
+          coverage: Json | null
           created_at: string
           failure_message: string | null
+          failure_stage: string | null
           finished_at: string | null
           id: string
           is_seed: boolean
           organization_id: string
+          parser_schema_version: number | null
           project_id: string
+          repository_name: string | null
+          routes_extracted: boolean
+          run_id: string
+          stage: string | null
+          stage_message: string | null
+          stage_messages: Json
           started_at: string | null
           status: string
+          updated_at: string
         }
         Insert: {
+          adapter?: string | null
           commit_sha?: string | null
+          coverage?: Json | null
           created_at?: string
           failure_message?: string | null
+          failure_stage?: string | null
           finished_at?: string | null
           id?: string
           is_seed?: boolean
           organization_id: string
+          parser_schema_version?: number | null
           project_id: string
+          repository_name?: string | null
+          routes_extracted?: boolean
+          run_id?: string
+          stage?: string | null
+          stage_message?: string | null
+          stage_messages?: Json
           started_at?: string | null
           status?: string
+          updated_at?: string
         }
         Update: {
+          adapter?: string | null
           commit_sha?: string | null
+          coverage?: Json | null
           created_at?: string
           failure_message?: string | null
+          failure_stage?: string | null
           finished_at?: string | null
           id?: string
           is_seed?: boolean
           organization_id?: string
+          parser_schema_version?: number | null
           project_id?: string
+          repository_name?: string | null
+          routes_extracted?: boolean
+          run_id?: string
+          stage?: string | null
+          stage_message?: string | null
+          stage_messages?: Json
           started_at?: string | null
           status?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -73,21 +140,27 @@ export type Database = {
         Row: {
           analysis_id: string
           id: string
+          kinds: string[]
           organization_id: string
+          parser_order: number
           source_file_id: string
           target_file_id: string
         }
         Insert: {
           analysis_id: string
           id?: string
+          kinds: string[]
           organization_id: string
+          parser_order: number
           source_file_id: string
           target_file_id: string
         }
         Update: {
           analysis_id?: string
           id?: string
+          kinds?: string[]
           organization_id?: string
+          parser_order?: number
           source_file_id?: string
           target_file_id?: string
         }
@@ -126,23 +199,41 @@ export type Database = {
         Row: {
           analysis_id: string
           content: string
-          file_id: string
+          content_hashes: Json | null
+          context_hash: string | null
+          file_id: string | null
           id: string
+          model: string | null
           organization_id: string
+          run_id: string | null
+          target_path: string | null
+          target_type: string | null
         }
         Insert: {
           analysis_id: string
           content: string
-          file_id: string
+          content_hashes?: Json | null
+          context_hash?: string | null
+          file_id?: string | null
           id?: string
+          model?: string | null
           organization_id: string
+          run_id?: string | null
+          target_path?: string | null
+          target_type?: string | null
         }
         Update: {
           analysis_id?: string
           content?: string
-          file_id?: string
+          content_hashes?: Json | null
+          context_hash?: string | null
+          file_id?: string | null
           id?: string
+          model?: string | null
           organization_id?: string
+          run_id?: string | null
+          target_path?: string | null
+          target_type?: string | null
         }
         Relationships: [
           {
@@ -171,22 +262,28 @@ export type Database = {
       file_roles: {
         Row: {
           analysis_id: string
+          content_hash: string | null
           file_id: string
           id: string
+          model: string | null
           organization_id: string
           role: string
         }
         Insert: {
           analysis_id: string
+          content_hash?: string | null
           file_id: string
           id?: string
+          model?: string | null
           organization_id: string
           role: string
         }
         Update: {
           analysis_id?: string
+          content_hash?: string | null
           file_id?: string
           id?: string
+          model?: string | null
           organization_id?: string
           role?: string
         }
@@ -217,20 +314,50 @@ export type Database = {
       files: {
         Row: {
           analysis_id: string
+          commonjs_exports: string[] | null
+          extension: string
+          fan_in: number
+          fan_out: number
+          folder: string
+          hash: string
           id: string
+          kind: string | null
+          lines: number
+          module: string
           organization_id: string
+          parser_order: number
           path: string
         }
         Insert: {
           analysis_id: string
+          commonjs_exports?: string[] | null
+          extension: string
+          fan_in: number
+          fan_out: number
+          folder: string
+          hash: string
           id?: string
+          kind?: string | null
+          lines: number
+          module: string
           organization_id: string
+          parser_order: number
           path: string
         }
         Update: {
           analysis_id?: string
+          commonjs_exports?: string[] | null
+          extension?: string
+          fan_in?: number
+          fan_out?: number
+          folder?: string
+          hash?: string
           id?: string
+          kind?: string | null
+          lines?: number
+          module?: string
           organization_id?: string
+          parser_order?: number
           path?: string
         }
         Relationships: [
@@ -335,24 +462,30 @@ export type Database = {
           analysis_id: string
           file_id: string
           id: string
+          line: number | null
           method: string
           organization_id: string
+          parser_order: number | null
           path: string
         }
         Insert: {
           analysis_id: string
           file_id: string
           id?: string
+          line?: number | null
           method: string
           organization_id: string
+          parser_order?: number | null
           path: string
         }
         Update: {
           analysis_id?: string
           file_id?: string
           id?: string
+          line?: number | null
           method?: string
           organization_id?: string
+          parser_order?: number | null
           path?: string
         }
         Relationships: [
@@ -384,7 +517,83 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      advance_repository_analysis: {
+        Args: {
+          p_analysis_id: string
+          p_commit_sha?: string
+          p_message: string
+          p_organization_id: string
+          p_run_id: string
+          p_stage: string
+        }
+        Returns: undefined
+      }
+      begin_repository_analysis: {
+        Args: { p_organization_id: string; p_repository_url: string }
+        Returns: {
+          analysis_id: string
+          created: boolean
+          run_id: string
+          status: string
+        }[]
+      }
+      fail_repository_analysis: {
+        Args: {
+          p_analysis_id: string
+          p_message: string
+          p_organization_id: string
+          p_run_id: string
+          p_stage: string
+        }
+        Returns: boolean
+      }
+      read_repository_analysis: {
+        Args: { p_analysis_id: string }
+        Returns: Json
+      }
+      restart_repository_analysis: {
+        Args: { p_analysis_id: string; p_organization_id: string }
+        Returns: {
+          analysis_id: string
+          created: boolean
+          repository_url: string
+          run_id: string
+          status: string
+        }[]
+      }
+      save_explanation: {
+        Args: {
+          p_analysis_id: string
+          p_content: string
+          p_context_hash: string
+          p_hashes: Json
+          p_model: string
+          p_organization_id: string
+          p_path: string
+          p_run_id: string
+          p_type: string
+        }
+        Returns: undefined
+      }
+      store_repository_analysis: {
+        Args: {
+          p_analysis_id: string
+          p_organization_id: string
+          p_result: Json
+          p_run_id: string
+        }
+        Returns: undefined
+      }
+      store_repository_analysis_with_roles: {
+        Args: {
+          p_analysis_id: string
+          p_organization_id: string
+          p_result: Json
+          p_roles: Json
+          p_run_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

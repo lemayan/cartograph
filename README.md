@@ -1,13 +1,17 @@
 # Cartograph
 
-Phase 01 provides Clerk sign-in and teams, a protected workspace, invitations,
-and persistent system/light/dark themes. Supabase receives the Clerk session
-token; it does not manage a second session. No tables or queries exist yet.
+Paste a public GitHub repository URL in the dashboard header to fetch, parse,
+and store a dependency map. Analyses belong to a Clerk organization; Supabase
+policies protect both rows and private progress streams. The parser and graph
+calculations remain standalone. System/light/dark themes and team invitations
+are available through the workspace toolbar.
 
 ## Local setup
 
-Copy `.env.example` to `.env.local` and supply the four required values. Missing
-or invalid values stop startup and build with the variable's name.
+Copy `.env.example` to `.env.local` and supply the Clerk and Supabase values.
+`SUPABASE_SECRET_KEY` is used only by the server-only analysis writer. Reads and
+browser subscriptions use the publishable key and Clerk token. Missing public
+or Clerk configuration stops startup/build; a missing writer key stops submission.
 
 Use the pinned pnpm version through Corepack:
 
@@ -36,7 +40,7 @@ before requests with Clerk tokens can be authorized. See the
 
 Clerk's default v2 session token carries the current organization in `o.id`.
 Server rendering reads `auth().orgId` from that verified token. Later database
-policies should read the same claim, with no identity-provider lookup. Database
+policies read the same claim, with no identity-provider lookup. Database
 access starts with `createServerDatabaseClient()` in server code only.
 
 `/start` performs the only Clerk identity lookup: it reuses the user's newest
@@ -71,7 +75,7 @@ corepack pnpm build
 ```
 
 The browser acceptance check belongs to the user and is in
-[`docs/specs/phase-01.md`](docs/specs/phase-01.md).
+the phase specs, including [`docs/specs/phase-08.md`](docs/specs/phase-08.md).
 
 ## Standalone parser (Phase 03)
 
@@ -85,8 +89,10 @@ pnpm parser:verify
 
 The directory argument can point anywhere on disk. JSON output is the versioned
 `ParserResult` contract in `lib/parser/types.ts`, validated by
-`readParserResult()` before it is used. The CLI prints coverage, unique edges,
-skip reasons, and unresolved examples; the JSON keeps the full occurrence ledger.
+`readParserResult()` before it is used. The CLI detects Next.js, NestJS, then
+React from declared package dependencies. It prints coverage, unique edges,
+recovered routes, skip reasons, and unresolved examples; the JSON keeps the full
+occurrence ledger. Detection and framework knowledge live outside the parser core.
 
 The parser retains every supported file in complete directories, excluding
 dependency, hidden, and generated directories with explicit reasons. It does
@@ -94,29 +100,55 @@ not follow symlinks. `folder` is the exact parent directory, with `.` for files
 at the repository root. See [Phase 03 implementation](docs/phase-03-implementation.md)
 for the contract, selection rules, acceptance numbers, and limitations.
 
-## Dependency map preview (Phase 04)
+## Stored dependency map (Phase 07)
 
-Open `/preview` without signing in. The map uses the repository's Excalidraw parser
-snapshot: 706 files folded into 20 folder nodes. Click a folder to open its file
+Submit a public repository from `/`, then open `/analyses/<id>`. The progress
+page follows database broadcasts and redirects to `/analyses/<id>/map` after
+storage completes. Completed runs load the full parser contract from stored
+files, edges, and coverage under RLS. Click a folder to open its file
 panel, scroll its list to reach every file, click a row to highlight its real neighbours, or click the panel header
 to fold it again. Node height reflects fan-in. The right detail column shows the
 repository summary or selected file/folder structure, with clickable paths and
 hover highlights shared with the map. Explanation is an empty state for now.
 
-The rail groups parsed files by extension, with a coloured swatch and a count
-for each. File roles remain unclassified; they are separate from these categories.
+The rail groups parsed files by framework role in fixed reading order: Next.js
+shows Page routes, API endpoints, and Server actions; NestJS shows Controllers,
+Services, and Modules. Unmatched repositories use Generic files. The Routes
+button opens the stored method/pattern/source table. Source links point to the
+analysed commit. Existing analyses need a deliberate rerun to extract roles and
+routes; unknown runtime route configuration produces no guessed patterns.
 
 ```sh
-pnpm map:verify
-pnpm map:verify data/preview/graphql.json
+corepack pnpm parser <repository-directory> --out .cartograph/map.json
+corepack pnpm map:verify .cartograph/map.json
+corepack pnpm graph:verify .cartograph/map.json
+corepack pnpm adapters:verify
+corepack pnpm pipeline:verify
+corepack pnpm pipeline:verify:live
 ```
 
-See [Phase 04 implementation](docs/phase-04-implementation.md) for terminal
-acceptance numbers, snapshot provenance and coverage, selection, scrolling,
-palette, the browser checks to run, and remaining limitations. The canvas's
-browser acceptance remains pending.
+Map/graph verification requires an explicit real parser output with imports
+and cycles; missing input fails loudly. No parser snapshots or preview route
+are checked in. Live pipeline verification creates a temporary organization,
+tests the actual writer and RLS, then removes its own fixtures.
 
-See [Phase 05 implementation](docs/phase-05-implementation.md) for the detail
-pane, persistent tabs, exact neighbour lists, missing-data decisions, and
-browser acceptance. The current snapshot has no detected framework, route data,
-or classified file kinds; the pane reports those gaps explicitly.
+See [Phase 07 implementation](docs/phase-07-implementation.md) for applied
+migrations, progress and rerun behavior, verification, browser checks, and
+limitations. Earlier map/detail/graph implementation reports remain in `docs/`.
+
+See [Phase 08 implementation](docs/phase-08-implementation.md) for framework
+scope, route storage, terminal evidence, and browser acceptance.
+
+Phase 10 adds file/folded-folder explanations and semantic roles for unmatched
+files. Set `GEMINI_API_KEY` in the root `.env.local`; optional LangSmith settings
+are listed in `.env.example`. The wrapped OpenAI SDK uses the pinned Gemini 3.8
+Flash release for both tasks. No OpenAI or Groq key is required. Re-analyse older
+saved repositories to populate AI roles, then use the Explanation tab in Details.
+
+```sh
+corepack pnpm ai:verify
+corepack pnpm ai:verify:live
+```
+
+See [Phase 10 implementation](docs/phase-10-implementation.md) for the applied
+cache/RLS contract, retained pane answers, staleness checks, verification and limits.
