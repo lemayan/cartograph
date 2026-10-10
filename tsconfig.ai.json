@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.parser.json",
+  "compilerOptions": { "outDir": ".cartograph/ai", "lib": ["ES2022", "DOM"], "jsx": "react-jsx", "paths": { "@/*": ["./*"] } },
+  "include": ["scripts/ai-verify.ts", "scripts/ai-live-verify.ts", "scripts/explanation-prose-verify.tsx"]
+}

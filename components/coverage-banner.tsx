@@ -11,7 +11,7 @@ export function CoverageBanner({ coverage }: { coverage: ParserCoverage }) {
       <span>{coverage.imports.unresolved} unresolved imports</span></summary>
     <div className="coverage-body">
       <p>{coverage.filesParsed} parsed / {coverage.filesFound} found; {coverage.filesSkipped} skipped. The percentage counts discovered files, including excluded and unsupported files; it does not measure resolved imports.</p>
-      <p>{coverage.imports.resolved} resolved import occurrences, {coverage.imports.external} external, {coverage.imports.excluded} excluded, {coverage.imports.unresolved} unresolved. External packages are outside this repository’s map.</p>
+      <p>{coverage.imports.resolved} resolved / {coverage.imports.found} import occurrences found, {coverage.imports.external} external, {coverage.imports.excluded} excluded, {coverage.imports.unresolved} unresolved. This includes require calls. External packages are outside this repository’s map.</p>
       {coverage.skipped.length > 0 && <details><summary>Skipped files ({coverage.skipped.length})</summary>
         <ul className="coverage-ledger">{coverage.skipped.map((file) => <li key={file.path}><code>{file.path}</code><span>{file.reason}: {file.detail}</span></li>)}</ul>
       </details>}

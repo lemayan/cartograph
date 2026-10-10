@@ -18,14 +18,25 @@ const nest: RoleCategory[] = [
   { id: "guard", label: "Guards" }, { id: "interceptor", label: "Interceptors" },
   { id: "middleware", label: "Middleware" }, { id: "pipe", label: "Pipes" }, { id: "filter", label: "Filters" }, ...shared,
 ];
+const express: RoleCategory[] = [
+  { id: "route", label: "Routers" }, { id: "controller", label: "Controllers" },
+  { id: "service", label: "Services" }, { id: "model", label: "Models" },
+  { id: "middleware", label: "Middleware" }, ...shared.filter((role) => role.id !== "type"),
+];
 export function frameworkCategories(framework: string): readonly RoleCategory[] {
-  return framework === "nextjs" ? next : framework === "nestjs" ? nest : framework === "react" ? react : [shared[shared.length - 1]];
+  const conventions = framework === "nextjs" ? next : framework === "nestjs" ? nest : framework === "react" ? react : framework === "express" ? express : [shared[shared.length - 1]];
+  const semantic: RoleCategory[] = [{ id: "service", label: "Services" }, { id: "repository", label: "Repositories" },
+    { id: "model", label: "Models" }, { id: "utility", label: "Utilities" }, { id: "config", label: "Configuration" },
+    { id: "component", label: "Components" }, { id: "hook", label: "Hooks" }];
+  return [...conventions, ...semantic.filter((role) => !conventions.some((entry) => entry.id === role.id))];
 }
 export function frameworkLabel(framework: string) {
-  return framework === "nextjs" ? "Next.js" : framework === "nestjs" ? "NestJS" : framework === "react" ? "React" : "Generic";
+  return framework === "nextjs" ? "Next.js" : framework === "nestjs" ? "NestJS" : framework === "react" ? "React" : framework === "express" ? "Express" : "Generic";
 }
 export function roleFiles(files: readonly ParsedFile[], framework: string, category: string | null): Set<string> | null {
   if (category === null) return null;
   const known = new Set(frameworkCategories(framework).map((role) => role.id));
-  return new Set(files.filter((file) => category === "generic" ? file.kind === null || !known.has(file.kind) : file.kind === category).map((file) => file.path));
+  known.add("util");
+  return new Set(files.filter((file) => category === "generic" ? file.kind === null || !known.has(file.kind)
+    : category === "utility" ? file.kind === "utility" || file.kind === "util" : file.kind === category).map((file) => file.path));
 }

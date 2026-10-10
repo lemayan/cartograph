@@ -5,6 +5,7 @@ import type { AdapterFile, FrameworkAdapter } from "../parser/types";
 import type { selectRepository } from "../parser/parse";
 import { createNextAdapter } from "./nextjs";
 import { createNestAdapter } from "./nestjs";
+import { createExpressAdapter } from "./express";
 import { reactRole } from "./react";
 import { ownerDirectory, type FrameworkRoot } from "./scope";
 
@@ -27,9 +28,10 @@ export async function detectAdapter(selection: Awaited<ReturnType<typeof selectR
     return { directory: path.posix.dirname(file.path), dependencies };
   }));
   const directories = packages.map((item) => item.directory);
-  for (const [framework, dependency] of [["nextjs", "next"], ["nestjs", "@nestjs/core"], ["react", "react"]] as const) {
+  for (const [framework, dependency] of [["nextjs", "next"], ["nestjs", "@nestjs/core"], ["react", "react"], ["express", "express"]] as const) {
     const matching = packages.filter((item) => item.dependencies.has(dependency));
     if (!matching.length) continue;
+    if (framework === "express") return createExpressAdapter(matching.map((item) => item.directory), directories);
     const roots = await Promise.all(matching.map(async ({ directory }): Promise<FrameworkRoot> => {
       const at = (file: string) => directory === "." ? file : directory + "/" + file;
       async function first(files: string[], isDirectory: boolean) {
