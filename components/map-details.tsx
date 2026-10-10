@@ -9,6 +9,8 @@ import { countFileKinds, selectionFiles, type RepositoryDetails } from "@/lib/ma
 import { useMapHover } from "./map-hover";
 import { insightSentences, walkDependencies, type RepositoryInsights, type WalkDirection } from "@/lib/graph/analysis";
 import "./map-details.css";
+import { ExplanationPane } from "./explanation-pane";
+import type { ExplanationSetup } from "@/lib/explanations/types";
 
 type Tab = "structure" | "explanation";
 interface DetailProps {
@@ -19,9 +21,11 @@ interface DetailProps {
   onSelect: (selection: MapSelection) => void;
   insights: RepositoryInsights;
   categoryMatches: ReadonlySet<string> | null;
+  explanationSetup?: ExplanationSetup;
+  onNavigate: (selection: MapSelection) => void;
 }
 
-export function MapDetails({ result, folders, details, selection, onSelect, insights, categoryMatches }: DetailProps) {
+export function MapDetails({ result, folders, details, selection, onSelect, insights, categoryMatches, explanationSetup, onNavigate }: DetailProps) {
   const hover = useMapHover();
   const [tab, setTab] = useState<Tab>("structure");
   const [showCoverage, setShowCoverage] = useState(false);
@@ -192,13 +196,8 @@ export function MapDetails({ result, folders, details, selection, onSelect, insi
           )}
         </div>
         <div id="map-explanation-panel" role="tabpanel" aria-labelledby="map-explanation-tab" hidden={!selection || tab !== "explanation"}>
-          <section className="map-detail-section">
-            <h3>Explanation</h3>
-            <p className="map-detail-empty">No explanation has been generated.</p>
-            {file && pathButton(file.file)}
-            {folder && <code className="map-detail-name">{folder.path}</code>}
-            {!selection && <p className="map-detail-name">{result.repository}</p>}
-          </section>
+          <ExplanationPane setup={explanationSetup} selection={selection} result={result}
+            folders={folders.map((folder) => folder.path)} onSelect={onNavigate} />
         </div>
         <details className="map-insights">
           <summary>Insights <span>From parsed files and imports</span></summary>

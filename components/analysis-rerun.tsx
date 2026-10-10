@@ -2,7 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export function AnalysisRerun({ analysisId }: { analysisId: string }) {
+export function AnalysisRerun({ analysisId, label = "Re-run repository" }: { analysisId: string; label?: string }) {
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const [pending, setPending] = useState(false);
@@ -22,9 +22,9 @@ export function AnalysisRerun({ analysisId }: { analysisId: string }) {
   }
   return <div className="analysis-rerun">
     {confirming ? <><span>Replace the saved map with the latest commit?</span>
-      <button type="button" disabled={pending} onClick={rerun}>{pending ? "Starting…" : "Re-run repository"}</button>
+      <button type="button" disabled={pending} onClick={rerun}>{pending ? "Starting…" : label}</button>
       <button type="button" disabled={pending} onClick={() => setConfirming(false)}>Cancel</button></> :
-      <button type="button" onClick={() => setConfirming(true)}>Re-run repository</button>}
+      <button type="button" onClick={() => setConfirming(true)}>{label}</button>}
     {error && <p className="analysis-error" role="alert">{error}</p>}
   </div>;
 }

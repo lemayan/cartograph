@@ -138,3 +138,17 @@ limitations. Earlier map/detail/graph implementation reports remain in `docs/`.
 
 See [Phase 08 implementation](docs/phase-08-implementation.md) for framework
 scope, route storage, terminal evidence, and browser acceptance.
+
+Phase 10 adds file/folded-folder explanations and semantic roles for unmatched
+files. Set `GEMINI_API_KEY` in the root `.env.local`; optional LangSmith settings
+are listed in `.env.example`. The wrapped OpenAI SDK uses the pinned Gemini 3.8
+Flash release for both tasks. No OpenAI or Groq key is required. Re-analyse older
+saved repositories to populate AI roles, then use the Explanation tab in Details.
+
+```sh
+corepack pnpm ai:verify
+corepack pnpm ai:verify:live
+```
+
+See [Phase 10 implementation](docs/phase-10-implementation.md) for the applied
+cache/RLS contract, retained pane answers, staleness checks, verification and limits.

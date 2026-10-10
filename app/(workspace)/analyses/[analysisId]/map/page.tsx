@@ -8,6 +8,7 @@ import { AnalysisUpdates } from "@/components/analysis-progress";
 import { AnalysisRerun } from "@/components/analysis-rerun";
 import { CoverageBanner } from "@/components/coverage-banner";
 import { MapShell } from "@/components/map-shell";
+import { loadExplanations } from "@/lib/explanations/load";
 
 export default async function AnalysisMapPage({ params }: { params: Promise<{ analysisId: string }> }) {
   const { analysisId } = await params;
@@ -24,6 +25,7 @@ export default async function AnalysisMapPage({ params }: { params: Promise<{ an
     if (current.status !== "complete") redirect(`/analyses/${analysisId}`);
     throw new Error("Completed analysis has no stored parser result.");
   }
+  const explanations = analysis.commitSha ? await loadExplanations(analysisId, result, analysis.repositoryUrl, analysis.commitSha) : undefined;
   return <section className="analysis-page analysis-explorer" aria-labelledby="analysis-heading">
     <header className="analysis-heading"><div><Link href="/">All analyses</Link><h1 id="analysis-heading"><code>{repositoryLabel(analysis.repositoryUrl)}</code></h1></div>
       <div className="analysis-heading-meta">{analysis.commitSha && <code title={analysis.commitSha}>Commit {analysis.commitSha.slice(0, 7)}</code>}
@@ -31,6 +33,6 @@ export default async function AnalysisMapPage({ params }: { params: Promise<{ an
       </div>
     </header>
     <CoverageBanner coverage={result.coverage} /><div className="analysis-map"><MapShell key={analysis.updatedAt} result={result}
-      sourceBase={analysis.commitSha ? `${analysis.repositoryUrl}/blob/${analysis.commitSha}/` : undefined} /></div>
+      sourceBase={analysis.commitSha ? `${analysis.repositoryUrl}/blob/${analysis.commitSha}/` : undefined} explanationSetup={explanations} /></div>
   </section>;
 }

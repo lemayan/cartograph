@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type Ref } from "react";
 import {
   BaseEdge, Controls, Handle, MarkerType, Position, ReactFlow, ReactFlowProvider,
   getBezierPath, useReactFlow, useStore, useUpdateNodeInternals,
@@ -9,7 +9,7 @@ import {
 import { foldFolders } from "@/lib/map/folding";
 import { layoutScene } from "@/lib/map/layout";
 import { useFolderHover } from "./map-hover";
-import { createScene, expectedHandles, panelHeaderHeight, panelRowLimit, rowHandle, rowPortTop, scrollScene, selectionDirection, selectionHighlight, selectionVisibility, type MapSelection, type SceneNode } from "@/lib/map/scene";
+import { createScene, expectedHandles, fileRowHeight, panelHeaderHeight, panelRowLimit, rowHandle, rowPortTop, scrollScene, selectionDirection, selectionHighlight, selectionVisibility, type MapSelection, type SceneNode } from "@/lib/map/scene";
 import type { ParsedEdge, ParsedFile } from "@/lib/parser/types";
 import { categoryVisibility } from "@/lib/map/categories";
 import "@xyflow/react/dist/style.css";
@@ -48,6 +48,10 @@ function FolderNodeView({ id, data }: NodeProps<FolderNode>) {
   const aboveBright = data.aboveBright || (data.categoryMatches === null && hoveredIndex >= 0 && hoveredIndex < scene.rowStart);
   const belowBright = data.belowBright || (data.categoryMatches === null && hoveredIndex >= scene.rowEnd && hoveredIndex >= 0);
   const updateNodeInternals = useUpdateNodeInternals();
+  const viewport = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    if (viewport.current && Math.abs(viewport.current.scrollTop - scene.scrollTop) > 0.5) viewport.current.scrollTop = scene.scrollTop;
+  }, [scene.scrollTop, scene.expanded]);
   const handleKey = expectedHandles(scene, "in").join("|");
   useLayoutEffect(() => { updateNodeInternals(id); }, [id, handleKey, scene.scrollTop, updateNodeInternals]);
   const selected = selection?.type === "folder" ? selection.path === scene.folder.path
@@ -77,7 +81,7 @@ function FolderNodeView({ id, data }: NodeProps<FolderNode>) {
       {!scene.expanded && <Ports incoming="in" outgoing="out" />}
       {scene.expanded && (
         <>
-        <div className="map-file-viewport nodrag nopan nowheel" role="region" aria-label={`Files in ${scene.folder.path}`} tabIndex={0}
+        <div ref={viewport} className="map-file-viewport nodrag nopan nowheel" role="region" aria-label={`Files in ${scene.folder.path}`} tabIndex={0}
           style={{ height: scene.viewportHeight }}
           onWheel={(event) => event.stopPropagation()}
           onScroll={(event) => onScroll(id, event.currentTarget.scrollTop)}>
@@ -142,7 +146,7 @@ const edgeTypes = { import: ImportEdgeView };
 // Selection must not overwrite a queued panel refit's captured zoom cap.
 const initialFitOptions = { padding: 0.06, minZoom: 0.02, maxZoom: 1 };
 
-function RefitAfterLayout({ nodes, revision, maxZoom }: { nodes: SceneNode[]; revision: number; maxZoom: number }) {
+function RefitAfterLayout({ nodes, revision, maxZoom, focusId }: { nodes: SceneNode[]; revision: number; maxZoom: number; focusId?: string }) {
   const { fitView } = useReactFlow<FolderNode, ImportEdge>();
   const handled = useRef(-1);
   const ready = useStore((store) => store.panZoom !== null && store.width > 0 && store.height > 0
@@ -157,8 +161,9 @@ function RefitAfterLayout({ nodes, revision, maxZoom }: { nodes: SceneNode[]; re
   useEffect(() => {
     if (!ready || handled.current === revision) return;
     handled.current = revision;
-    void fitView({ nodes: nodes.map((node) => ({ id: node.id })), padding: 0.06, minZoom: 0.02, maxZoom, duration: 0 });
-  }, [fitView, maxZoom, nodes, ready, revision]);
+    void fitView({ nodes: (focusId ? nodes.filter((node) => node.id === focusId) : nodes).map((node) => ({ id: node.id })),
+      padding: focusId ? 0.25 : 0.06, minZoom: 0.02, maxZoom, duration: 0 });
+  }, [fitView, maxZoom, nodes, ready, revision, focusId]);
   return null;
 }
 
@@ -168,13 +173,28 @@ interface MapProps {
   selection: MapSelection | null;
   onSelect: (selection: MapSelection | null) => void;
   categoryMatches: ReadonlySet<string> | null;
+  navigateRef?: Ref<MapNavigator>;
 }
+export interface MapNavigator { focus(selection: MapSelection): void }
 
-function Canvas({ files, edges, selection, onSelect, categoryMatches }: MapProps) {
+function Canvas({ files, edges, selection, onSelect, categoryMatches, navigateRef }: MapProps) {
   const folded = useMemo(() => foldFolders(files, edges), [files, edges]);
-  const [view, setView] = useState<{ expanded: Set<string>; offsets: Map<string, number>; revision: number; maxZoom: number }>(
+  const [view, setView] = useState<{ expanded: Set<string>; offsets: Map<string, number>; revision: number; maxZoom: number; focusId?: string }>(
     () => ({ expanded: new Set(), offsets: new Map(), revision: 0, maxZoom: 1 }));
   const { getZoom } = useReactFlow<FolderNode, ImportEdge>();
+  useImperativeHandle(navigateRef, () => ({ focus(target) {
+    const folder = folded.folders.find((folder) => target.type === "folder" ? folder.path === target.path : folder.files.some((file) => file.path === target.path));
+    if (!folder) throw new Error(`Cannot navigate to absent target ${target.path}`);
+    setView((previous) => {
+      const expanded = new Set(previous.expanded);
+      const offsets = new Map(previous.offsets);
+      if (target.type === "file") {
+        expanded.add(folder.id);
+        offsets.set(folder.id, Math.max(0, folder.files.findIndex((file) => file.path === target.path) - 2) * fileRowHeight);
+      }
+      return { expanded, offsets, revision: previous.revision + 1, maxZoom: 1, focusId: folder.id };
+    });
+  } }), [folded]);
   const geometry = useMemo(() => layoutScene(createScene(folded.folders, edges, view.expanded)), [folded, edges, view.expanded]);
   const scene = useMemo(() => scrollScene(geometry, edges, view.offsets), [geometry, edges, view.offsets]);
   const highlight = useMemo(() => selectionHighlight(selection, folded.folders, edges), [selection, folded, edges]);
@@ -250,7 +270,7 @@ function Canvas({ files, edges, selection, onSelect, categoryMatches }: MapProps
         onPaneClick={clearSelection}
       >
         <Controls showInteractive={false} fitViewOptions={initialFitOptions} />
-        <RefitAfterLayout nodes={scene.nodes} revision={view.revision} maxZoom={view.maxZoom} />
+        <RefitAfterLayout nodes={scene.nodes} revision={view.revision} maxZoom={view.maxZoom} focusId={view.focusId} />
       </ReactFlow>
     </div>
   );
