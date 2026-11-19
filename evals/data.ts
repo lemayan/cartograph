@@ -3,17 +3,21 @@ import type { SemanticRole } from "../lib/ai/roles";
 import type { explanationContext } from "../lib/explanations/context";
 import type { ImportKind } from "../lib/parser/types";
 
+/** Narrow untrusted data to a non-null, non-array object. */
 export function record(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
+/** Require a non-empty string from evaluation data; throw for invalid values. */
 export function text(value: unknown): string {
   if (typeof value !== "string" || !value) throw new Error("Expected a non-empty string in eval data.");
   return value;
 }
+/** Require an array containing only strings from evaluation data. */
 export function strings(value: unknown): string[] {
   if (!Array.isArray(value) || !value.every((item: unknown) => typeof item === "string")) throw new Error("Expected a path list in eval data.");
   return value;
 }
+/** Hash captured UTF-8 source with SHA-256 for later integrity checks. */
 export function hash(contents: string) { return createHash("sha256").update(contents).digest("hex"); }
 export interface RoleExample {
   path: string; hash: string; contents: string; expected: SemanticRole;
@@ -26,6 +30,7 @@ export interface ExplanationExample {
   origin: string;
 }
 
+/** Validate captured facts, member source hashes and the exact path allowlist; throw on inconsistencies. */
 export function validateExplanation(value: unknown): ExplanationExample {
   if (!record(value) || !record(value.facts) || !record(value.facts.selection)
     || !["file", "folder"].includes(text(value.facts.selection.type)) || !Array.isArray(value.facts.files)
@@ -35,6 +40,7 @@ export function validateExplanation(value: unknown): ExplanationExample {
     if (!record(file)) throw new Error("Invalid file facts.");
     return { path: text(file.path), hash: text(file.hash), kind: file.kind === null ? null : text(file.kind), lines: Number(file.lines) };
   });
+  /** Validate edge endpoints against captured files and reject unsupported import kinds. */
   function edges(value: unknown) {
     if (!Array.isArray(value)) throw new Error("Explanation facts lack edges.");
     return value.map((edge: unknown) => {

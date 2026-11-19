@@ -1,6 +1,7 @@
 import { Client } from "langsmith";
 import { record, text } from "./data";
 
+/** Read a bounded set of completed explanation traces from the last seven days; fail if none exist. */
 export async function recentExplanations(client: Client, limit = 50) {
   const project = await client.readProject({ projectName: process.env.LANGSMITH_PROJECT || "default" });
   const runs = [];
@@ -37,6 +38,7 @@ export async function suppliedInput(client: Client, projectId: string, run: { in
   return facts;
 }
 
+/** Extract the exact unique file and selection paths from trace facts, rejecting malformed data. */
 export function pathsFromFacts(input: unknown): string[] {
   if (!record(input) || !record(input.facts) || !Array.isArray(input.facts.files) || !record(input.facts.selection)) throw new Error("Trace has no supplied paths.");
   return [...new Set([...input.facts.files.map((file: unknown) => {

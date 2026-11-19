@@ -5,10 +5,12 @@ import { save } from "./datasets";
 
 /** Eval-only content-addressed disk cache. Each read still happens inside cachedAI's trace. */
 export function evaluationCache(): AICache {
+  /** Derive a disk-cache path from the task, model and content key. */
   const filename = (task: string, model: string, key: string) => `.cartograph/eval-cache/${contentKey({ task, model, key })}.json`;
   let lastMiss = 0;
   let pacing = Promise.resolve();
   return {
+    /** Read a cached response, pacing cache misses before a model request. */
     async read(task, model, key) {
       try {
         const value: unknown = JSON.parse(await readFile(filename(task, model, key), "utf8"));
@@ -29,6 +31,7 @@ export function evaluationCache(): AICache {
         throw error;
       }
     },
+    /** Persist a model response under its content-addressed cache path. */
     async write(task, model, key, content) { await save(filename(task, model, key), content); },
   };
 }

@@ -1,5 +1,6 @@
 import type { EvaluationResult } from "langsmith/evaluation";
 
+/** Average requested metrics only when every expected prediction and bounded numeric score is present. */
 export function experimentScores(rows: readonly { run: { error?: string | null };
   evaluationResults: { results: EvaluationResult[] } }[], count: number, keys: readonly string[]) {
   if (rows.length !== count) throw new Error(`Experiment returned ${rows.length}/${count} examples.`);

@@ -7,9 +7,11 @@ import type { MapSelection } from "../map/scene";
 import type { Explanation } from "./types";
 import { explanationInstructions } from "./prompt";
 
+/** Derive the versioned cache key from the selection and its parsed explanation context. */
 export function explanationKey(result: ParserResult, selection: MapSelection) {
   return contentKey({ version: 1, context: explanationContext(result, selection) });
 }
+/** Explain a selection with live source checks, marking changed repositories stale and checking mentioned paths. */
 export async function explainSelection(result: ParserResult, selection: MapSelection, repositoryUrl: string,
   analysedCommit: string, cache: AICache,
   repository = { head: repositoryHead, source: repositorySource }): Promise<Explanation> {

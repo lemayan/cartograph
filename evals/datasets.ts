@@ -11,10 +11,12 @@ import { recentExplanations, suppliedInput } from "./traffic";
 
 export const roleDataFile = ".cartograph/eval-data/roles.json";
 export const explanationDataFile = ".cartograph/eval-data/explanations.json";
+/** Write formatted JSON, creating the destination directory when needed. */
 export async function save(file: string, value: unknown) {
   await mkdir(path.dirname(file), { recursive: true });
   await writeFile(file, JSON.stringify(value, null, 2) + "\n");
 }
+/** Freeze thirty convention-labelled public source files with hashes and repository provenance. */
 export async function captureRoles(url = "https://github.com/react-hook-form/react-hook-form") {
   const repository = publicRepository(url);
   const archive = await fetchPublicRepository(repository);
@@ -45,6 +47,7 @@ export async function captureRoles(url = "https://github.com/react-hook-form/rea
   } finally { await archive.cleanup(); }
 }
 
+/** Load at least thirty held-out examples, rejecting duplicate identities or changed source. */
 export async function readRoles(): Promise<RoleExample[]> {
   const data: unknown = JSON.parse(await readFile(roleDataFile, "utf8"));
   if (!Array.isArray(data) || data.length < 30) throw new Error("Capture a role dataset of at least thirty files first.");
@@ -62,6 +65,7 @@ export async function readRoles(): Promise<RoleExample[]> {
   });
 }
 
+/** Freeze distinct non-stale trace contexts, requiring both file and folder selections. */
 export async function captureExplanations(client: Client) {
   const { project, runs } = await recentExplanations(client);
   const examples = [];
@@ -82,6 +86,7 @@ export async function captureExplanations(client: Client) {
   console.log(`Froze ${examples.length} distinct real contexts in ${explanationDataFile}; skipped ${skipped} stale or uncaptured runs.`);
 }
 
+/** Load and validate the frozen explanation contexts, requiring at least two examples. */
 export async function readExplanations() {
   const data: unknown = JSON.parse(await readFile(explanationDataFile, "utf8"));
   if (!Array.isArray(data) || data.length < 2) throw new Error("Capture explanation contexts first.");
@@ -96,6 +101,7 @@ export async function dataset(client: Client, prefix: string,
   if (await client.hasDataset({ datasetName: name })) {
     const stored = [];
     for await (const example of client.listExamples({ datasetName: name, limit: examples.length + 1 })) stored.push(example);
+    /** Hash canonically ordered inputs and outputs so stored examples can be compared without row order. */
     const canonical = (items: typeof examples) => items.map((item) => contentKey(stableValue({ inputs: item.inputs, outputs: item.outputs ?? {} }))).sort();
     if (JSON.stringify(canonical(stored)) !== JSON.stringify(canonical(examples))) throw new Error("Stored dataset differs from its frozen snapshot. Refusing comparison.");
     return client.readDataset({ datasetName: name });
@@ -105,6 +111,7 @@ export async function dataset(client: Client, prefix: string,
   return created;
 }
 
+/** Recursively sort object keys while preserving array order for stable dataset hashes. */
 function stableValue(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(stableValue);
   if (record(value)) return Object.fromEntries(Object.keys(value).sort().map((key) => [key, stableValue(value[key])]));

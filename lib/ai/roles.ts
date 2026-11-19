@@ -9,6 +9,7 @@ import type { ParserResult } from "../parser/types";
 export const semanticRoles = ["service", "repository", "model", "util", "config", "component", "hook"] as const;
 export type SemanticRole = typeof semanticRoles[number];
 export interface FileRole { path: string; role: SemanticRole; hash: string; model: string }
+/** Validate one allowed semantic role per expected file and attach its hash and model provenance. */
 export function validateRoles(content: string, expected: readonly { path: string; hash: string }[]): FileRole[] {
   const value: unknown = JSON.parse(content);
   if (typeof value !== "object" || value === null || !("roles" in value) || !Array.isArray(value.roles)) throw new Error("Invalid role response.");
@@ -25,6 +26,7 @@ export function validateRoles(content: string, expected: readonly { path: string
   if (roles.length !== expected.length) throw new Error("Role response omitted an unclassified file.");
   return roles;
 }
+/** Classify only convention-unmatched files in bounded batches after checking source size and hashes. */
 export async function classifyUnmatched(result: ParserResult, directory: string, cache: AICache): Promise<FileRole[]> {
   const files = result.files.filter((file) => file.kind === null);
   const roles: FileRole[] = [];
@@ -59,4 +61,5 @@ export async function classifyFiles(facts: readonly { path: string; hash: string
     if (!response.value) throw new Error("File classification returned no roles.");
     return response.value;
 }
+/** Hash raw source bytes with SHA-256 to check them against the parser snapshot. */
 function contentKeyBytes(value: Buffer) { return createHash("sha256").update(value).digest("hex"); }

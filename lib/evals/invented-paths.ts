@@ -41,6 +41,7 @@ export function inventedPaths(content: string, paths: readonly string[]): PathCh
   return { score: invented.length === 0 ? 1 : 0, tokens: mentions.map((mention) => mention.path), invented };
 }
 
+/** Format a deterministic path-check result as LangSmith feedback with evidence for failures. */
 export function pathFeedback(check: PathCheck) {
   return { key: "path_grounded", score: check.score, comment: check.invented.length
     ? JSON.stringify(check.invented) : `All ${check.tokens.length} path mentions belong to the supplied set.` };

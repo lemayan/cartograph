@@ -7,6 +7,7 @@ import { explanationInstructions } from "../lib/explanations/prompt";
 import { baselineInstructions } from "../evals/baseline-prompt";
 import { experimentScores } from "../evals/scoring";
 
+/** Verify evaluation invariants and fresh/cache-hit AI paths offline using synthetic data and a mocked fetch. */
 async function verify() {
   const paths = ["src/a.ts", "src/b.ts", "app/(team)/[id]/page.tsx", "src/core", "README.md", ".env.local", "src/my file.ts"];
   assert.equal(inventedPaths("Uses **`src/a.ts`** and (src/b.ts).\n- `app/(team)/[id]/page.tsx` calls `src/core`.", paths).score, 1);

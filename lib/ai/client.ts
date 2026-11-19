@@ -8,6 +8,7 @@ import { inventedPaths, pathFeedback } from "../evals/invented-paths";
 // Specific stable release, approved after live verification; never use Gemini's latest aliases.
 export const explanationModel = "gemini-3.8-flash";
 export const roleModel = "gemini-3.8-flash";
+/** Return whether tracing is explicitly enabled with a non-blank LangSmith API key. */
 export function tracingConfigured() {
   return process.env.LANGSMITH_TRACING === "true" && Boolean(process.env.LANGSMITH_API_KEY?.trim());
 }
@@ -28,6 +29,7 @@ export interface AICache {
   read(task: string, model: string, key: string): Promise<string | null>;
   write(task: string, model: string, key: string, content: string): Promise<void>;
 }
+/** Run a traced cache read and source preparation before any model call, validating responses and attaching optional path feedback. */
 export async function cachedAI<T>(options: {
   task: string; model: string; key: string; cache: AICache; input: unknown;
   instructions: string; schema?: Record<string, unknown>;
