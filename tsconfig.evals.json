@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.parser.json",
+  "compilerOptions": { "outDir": ".cartograph/evals", "lib": ["ES2022", "DOM"] },
+  "include": ["evals/**/*.ts", "scripts/evals.ts", "scripts/evals-verify.ts", "scripts/load-environment.ts"]
+}

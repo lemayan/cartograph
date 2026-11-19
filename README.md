@@ -152,3 +152,23 @@ corepack pnpm ai:verify:live
 
 See [Phase 10 implementation](docs/phase-10-implementation.md) for the applied
 cache/RLS contract, retained pane answers, staleness checks, verification and limits.
+
+Phase 11 evaluates explanation paths on live traffic and provides held-out role
+and prompt experiments in LangSmith. Standalone scripts load the root environment
+with Next's loader. The prompt usefulness metric is a subjective model judgment;
+path membership and role matching are deterministic.
+
+```sh
+corepack pnpm evals:verify
+corepack pnpm evals:paths
+corepack pnpm evals:dataset:roles
+corepack pnpm evals:roles
+corepack pnpm evals:dataset:explanations
+corepack pnpm evals:prompts
+corepack pnpm evals:verify:live
+```
+
+Run model experiments one at a time. Frozen datasets and eval caches live under
+ignored `.cartograph/`. See [Phase 11 implementation](docs/phase-11-implementation.md)
+for dataset provenance, scoring rules, acceptance steps and the live measurements
+still pending after the provider's daily quota reset.
